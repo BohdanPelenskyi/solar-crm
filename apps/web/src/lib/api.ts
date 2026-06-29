@@ -566,3 +566,52 @@ export async function deleteProjectTask(
     )
   }
 }
+
+export type ApiDashboardTask = {
+  id: number
+  projectId: number
+  title: string
+  description: string | null
+  status: ApiTaskStatus
+  priority: ApiTaskPriority
+  dueDate: string | null
+  createdAt: string
+  updatedAt: string
+  project: {
+    id: number
+    name: string
+    status: ApiProjectStatus
+    location: string | null
+  }
+}
+
+export type ApiDashboardOverview = {
+  metrics: {
+    totalProjects: number
+    activeProjects: number
+    pendingTasks: number
+    income: number
+    expenses: number
+    margin: number
+  }
+  upcomingTasks: ApiDashboardTask[]
+}
+
+export async function getDashboardOverview(): Promise<ApiDashboardOverview> {
+  const response = await fetch(`${API_URL}/dashboard`)
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    const message =
+      typeof body === 'object' &&
+      body !== null &&
+      'message' in body &&
+      typeof body.message === 'string'
+        ? body.message
+        : 'Не вдалося завантажити дашборд'
+
+    throw new Error(message)
+  }
+
+  return response.json() as Promise<ApiDashboardOverview>
+}
