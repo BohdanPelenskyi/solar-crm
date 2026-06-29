@@ -336,3 +336,41 @@ export async function updateProject(
 
   return response.json() as Promise<CreatedProject>
 }
+
+export async function deleteProjectDocument(
+  documentId: number,
+): Promise<void> {
+  const response = await fetch(`${API_URL}/documents/${documentId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    const message = body?.message
+
+    throw new Error(
+      Array.isArray(message)
+        ? message.join(', ')
+        : message || 'Не вдалося видалити документ',
+    )
+  }
+}
+
+export async function deleteProjectMedia(
+  mediaId: number,
+): Promise<void> {
+  const response = await fetch(`${API_URL}/media/${mediaId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    const message = body?.message
+
+    throw new Error(
+      Array.isArray(message)
+        ? message.join(', ')
+        : message || 'Не вдалося видалити файл',
+    )
+  }
+}

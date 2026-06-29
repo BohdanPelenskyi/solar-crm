@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router'
 import {
   ArrowLeft,
   CalendarDays,
-  FileText,
   MapPin,
   Phone,
   Upload,
@@ -14,7 +13,6 @@ import {
   getProject,
   getUploadUrl,
   type ApiContactRole,
-  type ApiFileCategory,
   type ApiProjectDetails,
   type ApiProjectStatus,
   type ApiTransactionType,
@@ -25,6 +23,7 @@ import { TransactionActions } from '../components/TransactionActions'
 import { CreateDocumentPanel } from '../components/CreateDocumentPanel'
 import { CreateMediaPanel } from '../components/CreateMediaPanel'
 import { EditProjectPanel } from '../components/EditProjectPanel'
+import { AttachmentDeleteButton } from '../components/AttachmentDeleteButton'
 
 const statusInfo: Record<
   ApiProjectStatus,
@@ -64,12 +63,12 @@ const contactRoleLabels: Record<ApiContactRole, string> = {
   OTHER: 'Інше',
 }
 
-const fileCategoryLabels: Record<ApiFileCategory, string> = {
-  PROPOSAL: 'Комерційна пропозиція',
-  PROJECT_DOCUMENT: 'Проєктна документація',
-  FINANCIAL_DOCUMENT: 'Фінансовий документ',
-  OTHER: 'Інший документ',
-}
+// const fileCategoryLabels: Record<ApiFileCategory, string> = {
+//   PROPOSAL: 'Комерційна пропозиція',
+//   PROJECT_DOCUMENT: 'Проєктна документація',
+//   FINANCIAL_DOCUMENT: 'Фінансовий документ',
+//   OTHER: 'Інший документ',
+// }
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('uk-UA', {
@@ -521,19 +520,30 @@ export function ProjectDetailsPage() {
               )}
             </div>
 
-            <div className="p-3">
-              <p className="text-xs font-semibold text-blue-700">
-                {media.type === 'PHOTO' ? 'Фото' : 'Відео'}
-              </p>
+           <div className="flex items-start justify-between gap-3 p-3">
+  <div className="min-w-0">
+    <p className="text-xs font-semibold text-blue-700">
+      {media.type === 'PHOTO' ? 'Фото' : 'Відео'}
+    </p>
 
-              <p className="mt-1 truncate text-sm font-semibold text-slate-800">
-                {media.originalName}
-              </p>
+    <p className="mt-1 truncate text-sm font-semibold text-slate-800">
+      {media.originalName}
+    </p>
 
-              <p className="mt-1 text-xs text-slate-500">
-                {formatDate(media.createdAt)}
-              </p>
-            </div>
+    <p className="mt-1 text-xs text-slate-500">
+      {formatDate(media.createdAt)}
+    </p>
+  </div>
+
+  <AttachmentDeleteButton
+    kind="media"
+    id={media.id}
+    onDeleted={async () => {
+      const refreshedProject = await getProject(project.id)
+      setProject(refreshedProject)
+    }}
+  />
+</div>
           </article>
         )
       })}
@@ -624,28 +634,36 @@ export function ProjectDetailsPage() {
               ) : (
                 <div className="mt-5 space-y-3">
                   {project.files.map((file) => (
-                    <a
-  key={file.id}
-  href={getUploadUrl(file.storageKey)}
-  target="_blank"
-  rel="noreferrer"
-  className="flex items-center gap-3 rounded-2xl border border-slate-100 p-3 transition hover:border-blue-300 hover:bg-blue-50"
->
-                      <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
-                        <FileText size={20} />
-                      </div>
+  <div
+    key={file.id}
+    className="flex items-center gap-3 rounded-2xl border border-slate-100 p-3"
+  >
+    <a
+      href={getUploadUrl(file.storageKey)}
+      target="_blank"
+      rel="noreferrer"
+      className="min-w-0 flex-1"
+    >
+      <p className="truncate text-sm font-semibold text-slate-800">
+        {file.originalName}
+      </p>
 
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-800">
-                          {file.originalName}
-                        </p>
+      <p className="mt-1 text-xs text-slate-500">
+        {file.isFinal ? 'Фінальна версія' : 'Документ'} ·{' '}
+        {formatDate(file.uploadedAt)}
+      </p>
+    </a>
 
-                        <p className="mt-1 text-xs text-slate-500">
-                          {fileCategoryLabels[file.category]}
-                        </p>
-                      </div>
-                    </a>
-                  ))}
+    <AttachmentDeleteButton
+      kind="document"
+      id={file.id}
+      onDeleted={async () => {
+        const refreshedProject = await getProject(project.id)
+        setProject(refreshedProject)
+      }}
+    />
+  </div>
+))}
                 </div>
               )}
             </section>
