@@ -6,7 +6,7 @@ import {
   type ApiProject,
   type ApiProjectStatus,
 } from '../lib/api'
-
+import { CreateProjectPanel } from '../components/CreateProjectPanel'
 type StatusFilter = 'ALL' | ApiProjectStatus
 
 const statusInfo: Record<
@@ -100,10 +100,11 @@ export function ProjectsPage() {
             Список проєктів
           </h1>
 
-          <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
-            <Plus size={18} />
-            Новий проєкт
-          </button>
+          <CreateProjectPanel
+  onCreated={async () => {
+    await loadProjects()
+  }}
+/>
         </div>
 
         <section className="mt-7 rounded-3xl bg-white p-5 shadow-sm sm:p-6">

@@ -143,3 +143,40 @@ export async function createProjectContact(
 
   return response.json() as Promise<ApiProjectContact>
 }
+
+export type CreateProjectPayload = {
+  name: string
+  status: ApiProjectStatus
+  source?: string
+  location?: string
+  notes?: string
+}
+
+export type CreatedProject = {
+  id: number
+  name: string
+  status: ApiProjectStatus
+  source: string | null
+  location: string | null
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export async function createProject(
+  payload: CreateProjectPayload,
+): Promise<CreatedProject> {
+  const response = await fetch(`${API_URL}/projects`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error('Не вдалося створити проєкт')
+  }
+
+  return response.json() as Promise<CreatedProject>
+}
