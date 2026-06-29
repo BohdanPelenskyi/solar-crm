@@ -1,0 +1,137 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProjectStatus {
+  DRAFT
+  PROPOSAL_SENT
+  IN_PROGRESS
+  INSTALLATION
+  COMPLETED
+  CANCELED
+}
+
+enum ContactRole {
+  OWNER
+  ACCOUNTANT
+  ELECTRICIAN
+  MANAGER
+  OTHER
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  OTHER
+}
+
+enum FileCategory {
+  PROPOSAL
+  PROJECT_DOCUMENT
+  FINANCIAL_DOCUMENT
+  OTHER
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
+model Project {
+  id       Int           @id @default(autoincrement())
+  name     String
+  status   ProjectStatus @default(DRAFT)
+  source   String?
+  location String?
+  notes    String?
+
+  contacts     ProjectContact[]
+  transactions FinancialTransaction[]
+  files        ProjectFile[]
+  media        ProjectMedia[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([name])
+}
+
+model ProjectContact {
+  id        Int         @id @default(autoincrement())
+  projectId Int
+  fullName  String
+  phone     String
+  role      ContactRole @default(OTHER)
+  position  String?
+  isPrimary Boolean     @default(false)
+  createdAt DateTime    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model FinancialTransaction {
+  id            Int             @id @default(autoincrement())
+  projectId     Int
+  type          TransactionType
+  amount        Decimal         @db.Decimal(12, 2)
+  counterparty  String?
+  paymentMethod PaymentMethod   @default(BANK_TRANSFER)
+  accountName   String?
+  occurredAt    DateTime
+  comment       String?
+  receiptPath   String?
+  createdAt     DateTime        @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, type])
+  @@index([occurredAt])
+}
+
+model ProjectFile {
+  id           Int          @id @default(autoincrement())
+  projectId    Int
+  category     FileCategory
+  originalName String
+  storageKey   String
+  mimeType     String
+  size         Int
+  isFinal      Boolean      @default(false)
+  uploadedAt   DateTime     @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, category])
+}
+
+model ProjectMedia {
+  id              Int       @id @default(autoincrement())
+  projectId       Int
+  type            MediaType
+  originalName    String
+  storageKey      String
+  thumbnailKey    String?
+  mimeType        String
+  size            Int
+  durationSeconds Int?
+  createdAt       DateTime  @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, type])
+}
