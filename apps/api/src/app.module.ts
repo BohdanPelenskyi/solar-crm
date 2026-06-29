@@ -5,9 +5,10 @@ import { ProjectsModule } from './projects/projects.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { FilesModule } from './files/files.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
-  imports: [PrismaModule, ProjectsModule, ContactsModule, TransactionsModule, FilesModule],
+  imports: [PrismaModule, ProjectsModule, ContactsModule, TransactionsModule, FilesModule, MediaModule],
   controllers: [AppController],
 })
 export class AppModule {}

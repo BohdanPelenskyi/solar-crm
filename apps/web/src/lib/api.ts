@@ -285,3 +285,54 @@ export async function uploadProjectDocument(
 export function getUploadUrl(storageKey: string) {
   return `http://localhost:3000/uploads/${storageKey}`
 }
+
+export async function uploadProjectMedia(
+  projectId: number,
+  file: File,
+): Promise<ApiProjectMedia> {
+  const formData = new FormData()
+
+  formData.append('file', file)
+
+  const response = await fetch(
+    `${API_URL}/projects/${projectId}/media`,
+    {
+      method: 'POST',
+      body: formData,
+    },
+  )
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    const message = body?.message
+
+    throw new Error(
+      Array.isArray(message)
+        ? message.join(', ')
+        : message || 'Не вдалося завантажити файл',
+    )
+  }
+
+  return response.json() as Promise<ApiProjectMedia>
+}
+
+export type UpdateProjectPayload = Partial<CreateProjectPayload>
+
+export async function updateProject(
+  projectId: number,
+  payload: UpdateProjectPayload,
+): Promise<CreatedProject> {
+  const response = await fetch(`${API_URL}/projects/${projectId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error('Не вдалося оновити проєкт')
+  }
+
+  return response.json() as Promise<CreatedProject>
+}

@@ -23,6 +23,8 @@ import { CreateContactPanel } from '../components/CreateContactPanel'
 import { CreateTransactionPanel } from '../components/CreateTransactionPanel'
 import { TransactionActions } from '../components/TransactionActions'
 import { CreateDocumentPanel } from '../components/CreateDocumentPanel'
+import { CreateMediaPanel } from '../components/CreateMediaPanel'
+import { EditProjectPanel } from '../components/EditProjectPanel'
 
 const statusInfo: Record<
   ApiProjectStatus,
@@ -307,11 +309,21 @@ export function ProjectDetailsPage() {
               </div>
             </div>
 
-            <span
-              className={`inline-flex w-fit rounded-full px-3 py-1.5 text-sm font-semibold ${status.className}`}
-            >
-              {status.label}
-            </span>
+            <div className="flex flex-wrap items-center gap-3">
+  <EditProjectPanel
+    project={project}
+    onUpdated={async () => {
+      const refreshedProject = await getProject(project.id)
+      setProject(refreshedProject)
+    }}
+  />
+
+  <span
+    className={`inline-flex w-fit rounded-full px-3 py-1.5 text-sm font-semibold ${status.className}`}
+  >
+    {status.label}
+  </span>
+</div>
           </div>
 
           <div className="mt-6 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 xl:grid-cols-4">
@@ -447,44 +459,87 @@ export function ProjectDetailsPage() {
             </section>
 
             <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  Фото та відео
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Матеріали з об’єкта
-                </p>
-              </div>
+  <div className="flex items-start justify-between gap-4">
+    <div>
+      <h2 className="text-lg font-bold text-slate-900">
+        Фото та відео
+      </h2>
 
-              {project.media.length === 0 ? (
-                <div className="mt-5 rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center">
-                  <Upload size={24} className="mx-auto text-slate-400" />
-                  <p className="mt-3 text-sm font-semibold text-slate-600">
-                    Файли ще не завантажені
-                  </p>
-                </div>
+      <p className="mt-1 text-sm text-slate-500">
+        Матеріали з об’єкта
+      </p>
+    </div>
+
+    <CreateMediaPanel
+      projectId={project.id}
+      onCreated={async () => {
+        const refreshedProject = await getProject(project.id)
+        setProject(refreshedProject)
+      }}
+    />
+  </div>
+
+  {project.media.length === 0 ? (
+    <div className="mt-5 rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center">
+      <Upload size={24} className="mx-auto text-slate-400" />
+
+      <p className="mt-3 text-sm font-semibold text-slate-600">
+        Фото та відео ще не завантажені
+      </p>
+    </div>
+  ) : (
+    <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {project.media.map((media) => {
+        const mediaUrl = getUploadUrl(media.storageKey)
+
+        return (
+          <article
+            key={media.id}
+            className="overflow-hidden rounded-2xl border border-slate-100 bg-white"
+          >
+            <div className="aspect-[4/3] bg-slate-100">
+              {media.type === 'PHOTO' ? (
+                <a
+                  href={mediaUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block h-full"
+                >
+                  <img
+                    src={mediaUrl}
+                    alt={media.originalName}
+                    className="h-full w-full object-cover transition hover:scale-105"
+                  />
+                </a>
               ) : (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {project.media.map((media) => (
-                    <div
-                      key={media.id}
-                      className="rounded-2xl border border-slate-100 bg-slate-50 p-4"
-                    >
-                      <p className="text-xs font-semibold text-blue-700">
-                        {media.type === 'PHOTO' ? 'Фото' : 'Відео'}
-                      </p>
-                      <p className="mt-2 truncate font-semibold text-slate-800">
-                        {media.originalName}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {formatDate(media.createdAt)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                <video
+                  src={mediaUrl}
+                  controls
+                  preload="metadata"
+                  className="h-full w-full bg-slate-900 object-contain"
+                />
               )}
-            </section>
+            </div>
 
+            <div className="p-3">
+              <p className="text-xs font-semibold text-blue-700">
+                {media.type === 'PHOTO' ? 'Фото' : 'Відео'}
+              </p>
+
+              <p className="mt-1 truncate text-sm font-semibold text-slate-800">
+                {media.originalName}
+              </p>
+
+              <p className="mt-1 text-xs text-slate-500">
+                {formatDate(media.createdAt)}
+              </p>
+            </div>
+          </article>
+        )
+      })}
+    </div>
+  )}
+</section>
             <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">Фінанси</h2>
