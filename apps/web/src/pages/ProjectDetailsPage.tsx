@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import {
   ArrowLeft,
   CalendarDays,
@@ -25,6 +25,7 @@ import { CreateMediaPanel } from '../components/CreateMediaPanel'
 import { EditProjectPanel } from '../components/EditProjectPanel'
 import { AttachmentDeleteButton } from '../components/AttachmentDeleteButton'
 import { ContactActions } from '../components/ContactActions'
+import { DeleteProjectButton } from '../components/DeleteProjectButton'
 
 const statusInfo: Record<
   ApiProjectStatus,
@@ -179,6 +180,7 @@ function FinanceBlock({
 
 export function ProjectDetailsPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const projectId = Number(id)
 
   const [project, setProject] = useState<ApiProjectDetails | null>(null)
@@ -315,6 +317,14 @@ export function ProjectDetailsPage() {
     onUpdated={async () => {
       const refreshedProject = await getProject(project.id)
       setProject(refreshedProject)
+    }}
+  />
+
+  <DeleteProjectButton
+    projectId={project.id}
+    projectName={project.name}
+    onDeleted={() => {
+      navigate('/projects')
     }}
   />
 

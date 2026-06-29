@@ -427,3 +427,22 @@ export async function deleteProjectContact(
     )
   }
 }
+
+export async function deleteProject(
+  projectId: number,
+): Promise<void> {
+  const response = await fetch(`${API_URL}/projects/${projectId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    const message = body?.message
+
+    throw new Error(
+      Array.isArray(message)
+        ? message.join(', ')
+        : message || 'Не вдалося видалити проєкт',
+    )
+  }
+}

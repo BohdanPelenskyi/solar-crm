@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { unlink } from 'node:fs/promises'
+import { join } from 'node:path'
 
 @Injectable()
 export class ProjectsService {
@@ -89,13 +91,64 @@ export class ProjectsService {
     });
   }
 
-  async remove(id: number) {
-    await this.findOne(id);
-
-    await this.prisma.project.delete({
-      where: {
-        id,
+async remove(id: number) {
+  const project = await this.prisma.project.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      files: {
+        select: {
+          storageKey: true,
+        },
       },
-    });
+      media: {
+        select: {
+          storageKey: true,
+        },
+      },
+    },
+  })
+
+  if (!project) {
+    throw new NotFoundException(`Проєкт з ID ${id} не знайдено`)
+  }
+
+  const storageKeys = [
+    ...project.files.map((file) => file.storageKey),
+    ...project.media.map((media) => media.storageKey),
+  ]
+
+  await this.prisma.$transaction(async (tx) => {
+    await tx.projectContact.deleteMany({
+      where: { projectId: id },
+    })
+
+    await tx.financialTransaction.deleteMany({
+      where: { projectId: id },
+    })
+
+    await tx.projectFile.deleteMany({
+      where: { projectId: id },
+    })
+
+    await tx.projectMedia.deleteMany({
+      where: { projectId: id },
+    })
+
+    await tx.project.delete({
+      where: { id },
+    })
+  })
+
+  await Promise.all(
+    storageKeys.map((storageKey) =>
+      unlink(join(process.cwd(), 'uploads', storageKey)).catch(
+        () => undefined,
+      ),
+    ),
+  )
+
+  return {
+    message: 'Проєкт видалено',
   }
 }
