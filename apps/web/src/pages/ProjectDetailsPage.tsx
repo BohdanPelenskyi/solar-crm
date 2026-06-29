@@ -26,6 +26,7 @@ import { EditProjectPanel } from '../components/EditProjectPanel'
 import { AttachmentDeleteButton } from '../components/AttachmentDeleteButton'
 import { ContactActions } from '../components/ContactActions'
 import { DeleteProjectButton } from '../components/DeleteProjectButton'
+import { ProjectTasks } from '../components/ProjectTasks'
 
 const statusInfo: Record<
   ApiProjectStatus,
@@ -477,6 +478,14 @@ export function ProjectDetailsPage() {
                 </table>
               </div>
             </section>
+            <ProjectTasks
+  projectId={project.id}
+  tasks={project.tasks}
+  onChanged={async () => {
+    const refreshedProject = await getProject(project.id)
+    setProject(refreshedProject)
+  }}
+/>
 
             <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
   <div className="flex items-start justify-between gap-4">

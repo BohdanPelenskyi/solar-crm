@@ -88,10 +88,31 @@ export type ApiProject = {
   contacts: ApiProjectContact[]
 }
 
+export type ApiTaskStatus =
+  | 'TODO'
+  | 'IN_PROGRESS'
+  | 'DONE'
+  | 'CANCELED'
+
+export type ApiTaskPriority = 'LOW' | 'MEDIUM' | 'HIGH'
+
+export type ApiProjectTask = {
+  id: number
+  projectId: number
+  title: string
+  description: string | null
+  status: ApiTaskStatus
+  priority: ApiTaskPriority
+  dueDate: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export type ApiProjectDetails = ApiProject & {
   transactions: ApiFinancialTransaction[]
   files: ApiProjectFile[]
   media: ApiProjectMedia[]
+  tasks: ApiProjectTask[]
 }
 
 async function request<T>(path: string): Promise<T> {
@@ -443,6 +464,105 @@ export async function deleteProject(
       Array.isArray(message)
         ? message.join(', ')
         : message || 'Не вдалося видалити проєкт',
+    )
+  }
+}
+
+export type CreateProjectTaskPayload = {
+  title: string
+  description?: string
+  status?: ApiTaskStatus
+  priority?: ApiTaskPriority
+  dueDate?: string
+}
+
+export type UpdateProjectTaskPayload =
+  Partial<CreateProjectTaskPayload>
+
+function getErrorMessage(
+  body: unknown,
+  fallback: string,
+): string {
+  if (
+    typeof body === 'object' &&
+    body !== null &&
+    'message' in body
+  ) {
+    const message = body.message
+
+    if (Array.isArray(message)) {
+      return message.join(', ')
+    }
+
+    if (typeof message === 'string') {
+      return message
+    }
+  }
+
+  return fallback
+}
+
+export async function createProjectTask(
+  projectId: number,
+  payload: CreateProjectTaskPayload,
+): Promise<ApiProjectTask> {
+  const response = await fetch(
+    `${API_URL}/projects/${projectId}/tasks`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    },
+  )
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+
+    throw new Error(
+      getErrorMessage(body, 'Не вдалося створити завдання'),
+    )
+  }
+
+  return response.json() as Promise<ApiProjectTask>
+}
+
+export async function updateProjectTask(
+  taskId: number,
+  payload: UpdateProjectTaskPayload,
+): Promise<ApiProjectTask> {
+  const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+
+    throw new Error(
+      getErrorMessage(body, 'Не вдалося оновити завдання'),
+    )
+  }
+
+  return response.json() as Promise<ApiProjectTask>
+}
+
+export async function deleteProjectTask(
+  taskId: number,
+): Promise<void> {
+  const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+
+    throw new Error(
+      getErrorMessage(body, 'Не вдалося видалити завдання'),
     )
   }
 }

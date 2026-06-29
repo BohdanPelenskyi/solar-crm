@@ -70,6 +70,13 @@ export class ProjectsService {
             createdAt: 'desc',
           },
         },
+        tasks: {
+          orderBy: [
+            { status: 'asc' },
+            { dueDate: 'asc' },
+            { createdAt: 'desc' },
+          ],
+        },
       },
     });
 
@@ -151,4 +158,5 @@ async remove(id: number) {
   return {
     message: 'Проєкт видалено',
   }
+}
 }

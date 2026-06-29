@@ -49,6 +49,19 @@ enum MediaType {
   VIDEO
 }
 
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model Project {
   id       Int           @id @default(autoincrement())
   name     String
@@ -61,6 +74,7 @@ model Project {
   transactions FinancialTransaction[]
   files        ProjectFile[]
   media        ProjectMedia[]
+  tasks        ProjectTask[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -134,4 +148,20 @@ model ProjectMedia {
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId, type])
+}
+
+
+model ProjectTask {
+  id          Int          @id @default(autoincrement())
+  projectId   Int
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
