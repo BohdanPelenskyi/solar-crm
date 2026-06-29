@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
-import { PrismaService } from '../prisma/prisma.service'
-import { CreateProjectDto } from './dto/create-project.dto'
-import { UpdateProjectDto } from './dto/update-project.dto'
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -10,7 +10,7 @@ export class ProjectsService {
   create(createProjectDto: CreateProjectDto) {
     return this.prisma.project.create({
       data: createProjectDto,
-    })
+    });
   }
 
   findAll() {
@@ -34,7 +34,7 @@ export class ProjectsService {
           },
         },
       },
-    })
+    });
   }
 
   async findOne(id: number) {
@@ -69,33 +69,33 @@ export class ProjectsService {
           },
         },
       },
-    })
+    });
 
     if (!project) {
-      throw new NotFoundException(`Проєкт з ID ${id} не знайдено`)
+      throw new NotFoundException(`Проєкт з ID ${id} не знайдено`);
     }
 
-    return project
+    return project;
   }
 
   async update(id: number, updateProjectDto: UpdateProjectDto) {
-    await this.findOne(id)
+    await this.findOne(id);
 
     return this.prisma.project.update({
       where: {
         id,
       },
       data: updateProjectDto,
-    })
+    });
   }
 
   async remove(id: number) {
-    await this.findOne(id)
+    await this.findOne(id);
 
     await this.prisma.project.delete({
       where: {
         id,
       },
-    })
+    });
   }
 }

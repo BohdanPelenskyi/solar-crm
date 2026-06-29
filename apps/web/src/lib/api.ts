@@ -35,6 +35,7 @@ export type ApiProjectContact = {
   isPrimary: boolean
   createdAt: string
 }
+export type ApiPaymentMethod = | 'CASH' | 'BANK_TRANSFER' | 'CARD' | 'OTHER'
 
 export type ApiFinancialTransaction = {
   id: number
@@ -42,7 +43,7 @@ export type ApiFinancialTransaction = {
   type: ApiTransactionType
   amount: string | number
   counterparty: string | null
-  paymentMethod: string
+ paymentMethod: ApiPaymentMethod
   accountName: string | null
   occurredAt: string
   comment: string | null
@@ -179,4 +180,36 @@ export async function createProject(
   }
 
   return response.json() as Promise<CreatedProject>
+}
+
+export type CreateProjectTransactionPayload = {
+  type: ApiTransactionType
+  amount: number
+  counterparty?: string
+  paymentMethod: ApiPaymentMethod
+  accountName?: string
+  occurredAt: string
+  comment?: string
+}
+
+export async function createProjectTransaction(
+  projectId: number,
+  payload: CreateProjectTransactionPayload,
+): Promise<ApiFinancialTransaction> {
+  const response = await fetch(
+    `${API_URL}/projects/${projectId}/transactions`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error('Не вдалося додати фінансову операцію')
+  }
+
+  return response.json() as Promise<ApiFinancialTransaction>
 }

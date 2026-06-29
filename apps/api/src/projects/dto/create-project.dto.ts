@@ -1,32 +1,27 @@
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator'
-import { ProjectStatus } from '../../generated/prisma/client'
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ProjectStatus } from '../../generated/prisma/client';
 
 export class CreateProjectDto {
   @IsString()
   @MaxLength(180)
-  name: string
+  name: string;
 
   @IsOptional()
   @IsEnum(ProjectStatus)
-  status?: ProjectStatus
+  status?: ProjectStatus;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  source?: string
+  source?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(180)
-  location?: string
+  location?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(2000)
-  notes?: string
+  notes?: string;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { Plus, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import {
   getProjects,
   type ApiProject,

@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
-import { ContactRole } from '../generated/prisma/client'
-import { PrismaService } from '../prisma/prisma.service'
-import { CreateContactDto } from './dto/create-contact.dto'
-import { UpdateContactDto } from './dto/update-contact.dto'
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { ContactRole } from '../generated/prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateContactDto } from './dto/create-contact.dto';
+import { UpdateContactDto } from './dto/update-contact.dto';
 
 @Injectable()
 export class ContactsService {
@@ -12,35 +12,34 @@ export class ContactsService {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
       select: { id: true },
-    })
+    });
 
     if (!project) {
-      throw new NotFoundException(`Проєкт з ID ${projectId} не знайдено`)
+      throw new NotFoundException(`Проєкт з ID ${projectId} не знайдено`);
     }
   }
 
   private async findContactOrThrow(id: number) {
     const contact = await this.prisma.projectContact.findUnique({
       where: { id },
-    })
+    });
 
     if (!contact) {
-      throw new NotFoundException(`Контакт з ID ${id} не знайдено`)
+      throw new NotFoundException(`Контакт з ID ${id} не знайдено`);
     }
 
-    return contact
+    return contact;
   }
 
   async create(projectId: number, createContactDto: CreateContactDto) {
-    await this.ensureProjectExists(projectId)
+    await this.ensureProjectExists(projectId);
 
     return this.prisma.$transaction(async (tx) => {
       const contactsCount = await tx.projectContact.count({
         where: { projectId },
-      })
+      });
 
-      const isPrimary =
-        createContactDto.isPrimary ?? contactsCount === 0
+      const isPrimary = createContactDto.isPrimary ?? contactsCount === 0;
 
       if (isPrimary) {
         await tx.projectContact.updateMany({
@@ -51,7 +50,7 @@ export class ContactsService {
           data: {
             isPrimary: false,
           },
-        })
+        });
       }
 
       return tx.projectContact.create({
@@ -63,24 +62,21 @@ export class ContactsService {
           position: createContactDto.position,
           isPrimary,
         },
-      })
-    })
+      });
+    });
   }
 
   async findAllByProject(projectId: number) {
-    await this.ensureProjectExists(projectId)
+    await this.ensureProjectExists(projectId);
 
     return this.prisma.projectContact.findMany({
       where: { projectId },
-      orderBy: [
-        { isPrimary: 'desc' },
-        { createdAt: 'asc' },
-      ],
-    })
+      orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }],
+    });
   }
 
   async update(id: number, updateContactDto: UpdateContactDto) {
-    const contact = await this.findContactOrThrow(id)
+    const contact = await this.findContactOrThrow(id);
 
     return this.prisma.$transaction(async (tx) => {
       if (updateContactDto.isPrimary === true) {
@@ -93,23 +89,23 @@ export class ContactsService {
           data: {
             isPrimary: false,
           },
-        })
+        });
       }
 
       return tx.projectContact.update({
         where: { id },
         data: updateContactDto,
-      })
-    })
+      });
+    });
   }
 
   async remove(id: number) {
-    const contact = await this.findContactOrThrow(id)
+    const contact = await this.findContactOrThrow(id);
 
     await this.prisma.$transaction(async (tx) => {
       await tx.projectContact.delete({
         where: { id },
-      })
+      });
 
       if (contact.isPrimary) {
         const nextContact = await tx.projectContact.findFirst({
@@ -119,15 +115,15 @@ export class ContactsService {
           orderBy: {
             createdAt: 'asc',
           },
-        })
+        });
 
         if (nextContact) {
           await tx.projectContact.update({
             where: { id: nextContact.id },
             data: { isPrimary: true },
-          })
+          });
         }
       }
-    })
+    });
   }
 }

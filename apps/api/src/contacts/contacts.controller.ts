@@ -9,10 +9,10 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-} from '@nestjs/common'
-import { ContactsService } from './contacts.service'
-import { CreateContactDto } from './dto/create-contact.dto'
-import { UpdateContactDto } from './dto/update-contact.dto'
+} from '@nestjs/common';
+import { ContactsService } from './contacts.service';
+import { CreateContactDto } from './dto/create-contact.dto';
+import { UpdateContactDto } from './dto/update-contact.dto';
 
 @Controller()
 export class ContactsController {
@@ -23,14 +23,12 @@ export class ContactsController {
     @Param('projectId', ParseIntPipe) projectId: number,
     @Body() createContactDto: CreateContactDto,
   ) {
-    return this.contactsService.create(projectId, createContactDto)
+    return this.contactsService.create(projectId, createContactDto);
   }
 
   @Get('projects/:projectId/contacts')
-  findAllByProject(
-    @Param('projectId', ParseIntPipe) projectId: number,
-  ) {
-    return this.contactsService.findAllByProject(projectId)
+  findAllByProject(@Param('projectId', ParseIntPipe) projectId: number) {
+    return this.contactsService.findAllByProject(projectId);
   }
 
   @Patch('contacts/:id')
@@ -38,12 +36,12 @@ export class ContactsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateContactDto: UpdateContactDto,
   ) {
-    return this.contactsService.update(id, updateContactDto)
+    return this.contactsService.update(id, updateContactDto);
   }
 
   @Delete('contacts/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id', ParseIntPipe) id: number) {
-    await this.contactsService.remove(id)
+    await this.contactsService.remove(id);
   }
 }

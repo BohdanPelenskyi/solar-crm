@@ -19,6 +19,7 @@ import {
   type ApiTransactionType,
 } from '../lib/api'
 import { CreateContactPanel } from '../components/CreateContactPanel'
+import { CreateTransactionPanel } from '../components/CreateTransactionPanel'
 
 const statusInfo: Record<
   ApiProjectStatus,
@@ -87,10 +88,14 @@ function FinanceBlock({
   title,
   type,
   items,
+  projectId,
+  onCreated,
 }: {
   title: string
   type: ApiTransactionType
   items: ApiProjectDetails['transactions']
+  projectId: number
+  onCreated: () => Promise<void> | void
 }) {
   const total = items.reduce((sum, transaction) => {
     return sum + Number(transaction.amount)
@@ -106,13 +111,21 @@ function FinanceBlock({
           : 'border-rose-100 bg-rose-50/40'
       }`}
     >
-      <h3
-        className={`font-bold ${
-          isIncome ? 'text-emerald-700' : 'text-rose-700'
-        }`}
-      >
-        {title}
-      </h3>
+      <div className="flex items-center justify-between gap-3">
+  <h3
+    className={`font-bold ${
+      isIncome ? 'text-emerald-700' : 'text-rose-700'
+    }`}
+  >
+    {title}
+  </h3>
+
+  <CreateTransactionPanel
+    projectId={projectId}
+    type={type}
+    onCreated={onCreated}
+  />
+</div>
 
       <div className="mt-3">
         {items.length === 0 ? (
@@ -472,16 +485,26 @@ export function ProjectDetailsPage() {
 
               <div className="mt-5 grid gap-4 lg:grid-cols-2">
                 <FinanceBlock
-                  title="Прихід"
-                  type="INCOME"
-                  items={incomeTransactions}
-                />
+  title="Прихід"
+  type="INCOME"
+  items={incomeTransactions}
+  projectId={project.id}
+  onCreated={async () => {
+    const refreshedProject = await getProject(project.id)
+    setProject(refreshedProject)
+  }}
+/>
 
                 <FinanceBlock
-                  title="Витрати"
-                  type="EXPENSE"
-                  items={expenseTransactions}
-                />
+  title="Витрати"
+  type="EXPENSE"
+  items={expenseTransactions}
+  projectId={project.id}
+  onCreated={async () => {
+    const refreshedProject = await getProject(project.id)
+    setProject(refreshedProject)
+  }}
+/>
               </div>
             </section>
           </div>
