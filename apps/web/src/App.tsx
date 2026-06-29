@@ -1,19 +1,25 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
+import { AppLayout } from './components/AppLayout'
+import { DashboardPage } from './pages/DashboardPage'
 import { ProjectDetailsPage } from './pages/ProjectDetailsPage'
 import { ProjectsPage } from './pages/ProjectsPage'
-import { DashboardPage } from './pages/DashboardPage'
 
-function App() {
+export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/projects/:id" element={<ProjectDetailsPage />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route
+          index
+          element={<Navigate to="/dashboard" replace />}
+        />
+
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="projects" element={<ProjectsPage />} />
+        <Route
+          path="projects/:id"
+          element={<ProjectDetailsPage />}
+        />
+      </Route>
+    </Routes>
   )
 }
-
-export default App
