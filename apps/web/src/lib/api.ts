@@ -213,3 +213,75 @@ export async function createProjectTransaction(
 
   return response.json() as Promise<ApiFinancialTransaction>
 }
+
+export type UpdateProjectTransactionPayload =
+  CreateProjectTransactionPayload
+
+export async function updateProjectTransaction(
+  transactionId: number,
+  payload: UpdateProjectTransactionPayload,
+): Promise<ApiFinancialTransaction> {
+  const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error('Не вдалося оновити фінансову операцію')
+  }
+
+  return response.json() as Promise<ApiFinancialTransaction>
+}
+
+export async function deleteProjectTransaction(
+  transactionId: number,
+): Promise<void> {
+  const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    throw new Error('Не вдалося видалити фінансову операцію')
+  }
+}
+
+export async function uploadProjectDocument(
+  projectId: number,
+  file: File,
+  category: ApiFileCategory,
+  isFinal = false,
+): Promise<ApiProjectFile> {
+  const formData = new FormData()
+
+  formData.append('file', file)
+  formData.append('category', category)
+  formData.append('isFinal', String(isFinal))
+
+  const response = await fetch(
+    `${API_URL}/projects/${projectId}/documents`,
+    {
+      method: 'POST',
+      body: formData,
+    },
+  )
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    const message = body?.message
+
+    throw new Error(
+      Array.isArray(message)
+        ? message.join(', ')
+        : message || 'Не вдалося завантажити документ',
+    )
+  }
+
+  return response.json() as Promise<ApiProjectFile>
+}
+
+export function getUploadUrl(storageKey: string) {
+  return `http://localhost:3000/uploads/${storageKey}`
+}

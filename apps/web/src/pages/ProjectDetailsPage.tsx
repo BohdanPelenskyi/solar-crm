@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import {
   getProject,
+  getUploadUrl,
   type ApiContactRole,
   type ApiFileCategory,
   type ApiProjectDetails,
@@ -20,6 +21,8 @@ import {
 } from '../lib/api'
 import { CreateContactPanel } from '../components/CreateContactPanel'
 import { CreateTransactionPanel } from '../components/CreateTransactionPanel'
+import { TransactionActions } from '../components/TransactionActions'
+import { CreateDocumentPanel } from '../components/CreateDocumentPanel'
 
 const statusInfo: Record<
   ApiProjectStatus,
@@ -149,9 +152,16 @@ function FinanceBlock({
                 </p>
               </div>
 
-              <p className="whitespace-nowrap font-semibold text-slate-900">
-                {formatMoney(transaction.amount)}
-              </p>
+              <div className="flex items-center gap-2">
+  <p className="whitespace-nowrap font-semibold text-slate-900">
+    {formatMoney(transaction.amount)}
+  </p>
+
+  <TransactionActions
+    transaction={transaction}
+    onChanged={onCreated}
+  />
+</div>
             </div>
           ))
         )}
@@ -540,7 +550,17 @@ export function ProjectDetailsPage() {
             </section>
 
             <section className="rounded-3xl bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900">Документи</h2>
+              <div className="flex items-center justify-between gap-4">
+  <h2 className="text-lg font-bold text-slate-900">Документи</h2>
+
+  <CreateDocumentPanel
+    projectId={project.id}
+    onCreated={async () => {
+      const refreshedProject = await getProject(project.id)
+      setProject(refreshedProject)
+    }}
+  />
+</div>
 
               {project.files.length === 0 ? (
                 <div className="mt-5 rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
@@ -549,10 +569,13 @@ export function ProjectDetailsPage() {
               ) : (
                 <div className="mt-5 space-y-3">
                   {project.files.map((file) => (
-                    <div
-                      key={file.id}
-                      className="flex items-center gap-3 rounded-2xl border border-slate-100 p-3"
-                    >
+                    <a
+  key={file.id}
+  href={getUploadUrl(file.storageKey)}
+  target="_blank"
+  rel="noreferrer"
+  className="flex items-center gap-3 rounded-2xl border border-slate-100 p-3 transition hover:border-blue-300 hover:bg-blue-50"
+>
                       <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
                         <FileText size={20} />
                       </div>
@@ -566,7 +589,7 @@ export function ProjectDetailsPage() {
                           {fileCategoryLabels[file.category]}
                         </p>
                       </div>
-                    </div>
+                    </a>
                   ))}
                 </div>
               )}
