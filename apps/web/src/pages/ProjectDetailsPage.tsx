@@ -24,6 +24,7 @@ import { CreateDocumentPanel } from '../components/CreateDocumentPanel'
 import { CreateMediaPanel } from '../components/CreateMediaPanel'
 import { EditProjectPanel } from '../components/EditProjectPanel'
 import { AttachmentDeleteButton } from '../components/AttachmentDeleteButton'
+import { ContactActions } from '../components/ContactActions'
 
 const statusInfo: Record<
   ApiProjectStatus,
@@ -405,6 +406,7 @@ export function ProjectDetailsPage() {
                       <th className="pb-3">Ім’я</th>
                       <th className="pb-3">Посада</th>
                       <th className="pb-3">Основний</th>
+                      <th className="py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Дії</th>
                     </tr>
                   </thead>
 
@@ -420,37 +422,46 @@ export function ProjectDetailsPage() {
                       </tr>
                     ) : (
                       project.contacts.map((contact) => (
-                        <tr
-                          key={contact.id}
-                          className="border-b border-slate-100 last:border-0"
-                        >
-                          <td className="py-4">
-                            <span className="inline-flex items-center gap-2 text-slate-700">
-                              <Phone size={16} className="text-blue-600" />
-                              {contact.phone}
-                            </span>
-                          </td>
+  <tr
+    key={contact.id}
+    className="border-b border-slate-100 last:border-0"
+  >
+    <td className="py-4">
+      <span className="inline-flex items-center gap-2 text-slate-700">
+        <Phone size={16} className="text-blue-600" />
+        {contact.phone}
+      </span>
+    </td>
 
-                          <td className="py-4 font-semibold text-slate-800">
-                            {contact.fullName}
-                          </td>
+    <td className="py-4 font-semibold text-slate-800">
+      {contact.fullName}
+    </td>
 
-                          <td className="py-4 text-slate-600">
-                            {contact.position ||
-                              contactRoleLabels[contact.role]}
-                          </td>
+    <td className="py-4 text-slate-600">
+      {contact.position || contactRoleLabels[contact.role]}
+    </td>
 
-                          <td className="py-4">
-                            {contact.isPrimary ? (
-                              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
-                                Так
-                              </span>
-                            ) : (
-                              <span className="text-slate-400">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))
+    <td className="py-4">
+      {contact.isPrimary ? (
+        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+          Так
+        </span>
+      ) : (
+        <span className="text-slate-400">—</span>
+      )}
+    </td>
+
+    <td className="w-[1%] whitespace-nowrap py-4 pl-4 pr-0 text-right">
+      <ContactActions
+        contact={contact}
+        onChanged={async () => {
+          const refreshedProject = await getProject(project.id)
+          setProject(refreshedProject)
+        }}
+      />
+    </td>
+  </tr>
+))
                     )}
                   </tbody>
                 </table>

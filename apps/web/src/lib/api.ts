@@ -374,3 +374,56 @@ export async function deleteProjectMedia(
     )
   }
 }
+
+export type UpdateProjectContactPayload = {
+  fullName?: string
+  phone?: string
+  role?: ApiContactRole
+  position?: string
+  isPrimary?: boolean
+}
+
+export async function updateProjectContact(
+  contactId: number,
+  payload: UpdateProjectContactPayload,
+): Promise<ApiProjectContact> {
+  const response = await fetch(`${API_URL}/contacts/${contactId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    const message = body?.message
+
+    throw new Error(
+      Array.isArray(message)
+        ? message.join(', ')
+        : message || 'Не вдалося оновити контакт',
+    )
+  }
+
+  return response.json() as Promise<ApiProjectContact>
+}
+
+export async function deleteProjectContact(
+  contactId: number,
+): Promise<void> {
+  const response = await fetch(`${API_URL}/contacts/${contactId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    const message = body?.message
+
+    throw new Error(
+      Array.isArray(message)
+        ? message.join(', ')
+        : message || 'Не вдалося видалити контакт',
+    )
+  }
+}
