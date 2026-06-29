@@ -3,6 +3,7 @@ import { AppLayout } from './components/AppLayout'
 import { DashboardPage } from './pages/DashboardPage'
 import { ProjectDetailsPage } from './pages/ProjectDetailsPage'
 import { ProjectsPage } from './pages/ProjectsPage'
+import { TasksPage } from './pages/TasksPage'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         />
 
         <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="tasks" element={<TasksPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route
           path="projects/:id"

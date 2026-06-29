@@ -32,6 +32,10 @@ export class TasksController {
   ) {
     return this.tasksService.findAllByProject(projectId)
   }
+  @Get('tasks')
+  findAll() {
+    return this.tasksService.findAll()
+  }
 
   @Patch('tasks/:id')
   update(

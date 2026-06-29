@@ -59,7 +59,25 @@ export class TasksService {
       ],
     })
   }
-
+      async findAll() {
+    return this.prisma.projectTask.findMany({
+      orderBy: [
+        { status: 'asc' },
+        { dueDate: 'asc' },
+        { createdAt: 'desc' },
+    ],
+        include: {
+        project: {
+        select: {
+        id: true,
+        name: true,
+        status: true,
+        location: true,
+      },
+      },
+    },
+  })
+  }
   async update(id: number, updateTaskDto: UpdateTaskDto) {
     await this.findTaskOrThrow(id)
 

@@ -615,3 +615,22 @@ export async function getDashboardOverview(): Promise<ApiDashboardOverview> {
 
   return response.json() as Promise<ApiDashboardOverview>
 }
+
+export type ApiGlobalTask = ApiProjectTask & {
+project: {
+id: number
+name: string
+status: ApiProjectStatus
+location: string | null
+}
+}
+export async function getAllTasks(): Promise<ApiGlobalTask[]> {
+const response = await fetch(`${API_URL}/tasks`)
+
+if (!response.ok) {
+throw new Error('Не вдалося завантажити завдання')
+}
+
+return response.json() as Promise<ApiGlobalTask[]>
+}
+
