@@ -8,6 +8,7 @@ import {
   RefreshCw,
   TrendingDown,
   TrendingUp,
+  CircleAlert,
 } from 'lucide-react'
 import {
   getDashboardOverview,
@@ -55,19 +56,32 @@ function formatDate(value: string | null) {
   }).format(new Date(value))
 }
 
-function isOverdue(value: string | null) {
-  if (!value) {
-    return false
-  }
+function startOfDay(value: Date) {
+const date = new Date(value)
+date.setHours(0, 0, 0, 0)
 
-  const dueDate = new Date(value)
-  dueDate.setHours(0, 0, 0, 0)
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  return dueDate < today
+return date
 }
+
+function isOverdue(value: string | null) {
+if (!value) {
+return false
+}
+
+return startOfDay(new Date(value)) < startOfDay(new Date())
+}
+
+function isToday(value: string | null) {
+if (!value) {
+return false
+}
+
+return (
+startOfDay(new Date(value)).getTime() ===
+startOfDay(new Date()).getTime()
+)
+}
+
 
 type MetricCardProps = {
   title: string
@@ -163,6 +177,20 @@ export function DashboardPage() {
 
   const { metrics, upcomingTasks } = dashboard
 
+  const attentionTasks = upcomingTasks.filter(
+  (task) =>
+    isOverdue(task.dueDate) ||
+    isToday(task.dueDate),
+)
+
+const overdueAttentionTasks = attentionTasks.filter((task) =>
+  isOverdue(task.dueDate),
+)
+
+const todayAttentionTasks = attentionTasks.filter((task) =>
+  isToday(task.dueDate),
+)
+
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl p-5 sm:p-7">
@@ -240,6 +268,92 @@ export function DashboardPage() {
             iconClassName="bg-violet-50 text-violet-600"
           />
         </section>
+
+        <section className="mt-7 rounded-3xl border border-amber-100 bg-white p-5 shadow-sm sm:p-6">
+  <div className="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <div className="flex items-center gap-2">
+        <CircleAlert size={21} className="text-amber-500" />
+
+        <h2 className="text-lg font-bold text-slate-900">
+          Потрібна увага
+        </h2>
+      </div>
+
+      <p className="mt-1 text-sm text-slate-500">
+        Прострочені та заплановані на сьогодні завдання
+      </p>
+    </div>
+
+    <Link
+      to="/tasks"
+      className="inline-flex items-center gap-2 rounded-xl border border-amber-200 px-3 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-50"
+    >
+      Усі завдання
+      <ArrowRight size={16} />
+    </Link>
+  </div>
+
+  {attentionTasks.length === 0 ? (
+    <div className="mt-5 rounded-2xl bg-emerald-50 p-5 text-sm font-semibold text-emerald-700">
+      На сьогодні критичних завдань немає.
+    </div>
+  ) : (
+    <div className="mt-5 space-y-3">
+      {attentionTasks.map((task) => {
+        const overdue = isOverdue(task.dueDate)
+
+        return (
+          <Link
+            key={task.id}
+            to={`/projects/${task.project.id}`}
+            className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-100 p-4 transition hover:border-blue-200 hover:bg-blue-50"
+          >
+            <div className="min-w-0">
+              <p className="font-semibold text-slate-900">
+                {task.title}
+              </p>
+
+              <p className="mt-1 text-sm text-slate-500">
+                {task.project.name}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  overdue
+                    ? 'bg-rose-50 text-rose-700'
+                    : 'bg-amber-50 text-amber-700'
+                }`}
+              >
+                {overdue ? 'Прострочено' : 'Сьогодні'}
+              </span>
+
+              <span
+                className={`text-sm font-semibold ${
+                  overdue
+                    ? 'text-rose-600'
+                    : 'text-amber-600'
+                }`}
+              >
+                {formatDate(task.dueDate)}
+              </span>
+            </div>
+          </Link>
+        )
+      })}
+    </div>
+  )}
+
+  {(overdueAttentionTasks.length > 0 ||
+    todayAttentionTasks.length > 0) && (
+    <p className="mt-4 text-xs font-semibold text-slate-500">
+      Прострочено: {overdueAttentionTasks.length} · На сьогодні:{' '}
+      {todayAttentionTasks.length}
+    </p>
+  )}
+    </section>
 
         <section className="mt-7 rounded-3xl bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
