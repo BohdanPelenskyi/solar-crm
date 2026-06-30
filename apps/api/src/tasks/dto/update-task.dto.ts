@@ -4,32 +4,29 @@ import {
   IsOptional,
   IsString,
   MaxLength,
-} from 'class-validator'
-import {
-  TaskPriority,
-  TaskStatus,
-} from '../../generated/prisma/client'
+} from 'class-validator';
+import { TaskPriority, TaskStatus } from '../../generated/prisma/client';
 
 export class UpdateTaskDto {
   @IsOptional()
   @IsString()
   @MaxLength(200)
-  title?: string
+  title?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(2000)
-  description?: string | null
+  description?: string | null;
 
   @IsOptional()
   @IsEnum(TaskStatus)
-  status?: TaskStatus
+  status?: TaskStatus;
 
   @IsOptional()
   @IsEnum(TaskPriority)
-  priority?: TaskPriority
+  priority?: TaskPriority;
 
   @IsOptional()
   @IsDateString()
-  dueDate?: string | null
+  dueDate?: string | null;
 }

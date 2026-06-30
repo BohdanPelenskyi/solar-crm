@@ -86,6 +86,12 @@ export type ApiProject = {
   createdAt: string
   updatedAt: string
   contacts: ApiProjectContact[]
+  financialSummary: {
+  income: number
+  expenses: number
+  margin: number
+  transactionsCount: number
+  }
 }
 
 export type ApiTaskStatus =

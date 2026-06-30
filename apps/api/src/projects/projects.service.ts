@@ -2,8 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { unlink } from 'node:fs/promises'
-import { join } from 'node:path'
+import { unlink } from 'node:fs/promises';
+import { join } from 'node:path';
 
 @Injectable()
 export class ProjectsService {
@@ -15,10 +15,10 @@ export class ProjectsService {
     });
   }
 
-  findAll() {
-    return this.prisma.project.findMany({
+  async findAll() {
+    const projects = await this.prisma.project.findMany({
       orderBy: {
-        createdAt: 'desc',
+        updatedAt: 'desc',
       },
       include: {
         contacts: {
@@ -27,15 +27,33 @@ export class ProjectsService {
           },
           take: 1,
         },
-        _count: {
+        transactions: {
           select: {
-            contacts: true,
-            transactions: true,
-            files: true,
-            media: true,
+            type: true,
+            amount: true,
           },
         },
       },
+    });
+
+    return projects.map(({ transactions, ...project }) => {
+      const income = transactions
+        .filter((transaction) => transaction.type === 'INCOME')
+        .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+
+      const expenses = transactions
+        .filter((transaction) => transaction.type === 'EXPENSE')
+        .reduce((sum, transaction) => sum + Number(transaction.amount), 0);
+
+      return {
+        ...project,
+        financialSummary: {
+          income,
+          expenses,
+          margin: income - expenses,
+          transactionsCount: transactions.length,
+        },
+      };
     });
   }
 
@@ -98,65 +116,65 @@ export class ProjectsService {
     });
   }
 
-async remove(id: number) {
-  const project = await this.prisma.project.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      files: {
-        select: {
-          storageKey: true,
-        },
-      },
-      media: {
-        select: {
-          storageKey: true,
-        },
-      },
-    },
-  })
-
-  if (!project) {
-    throw new NotFoundException(`Проєкт з ID ${id} не знайдено`)
-  }
-
-  const storageKeys = [
-    ...project.files.map((file) => file.storageKey),
-    ...project.media.map((media) => media.storageKey),
-  ]
-
-  await this.prisma.$transaction(async (tx) => {
-    await tx.projectContact.deleteMany({
-      where: { projectId: id },
-    })
-
-    await tx.financialTransaction.deleteMany({
-      where: { projectId: id },
-    })
-
-    await tx.projectFile.deleteMany({
-      where: { projectId: id },
-    })
-
-    await tx.projectMedia.deleteMany({
-      where: { projectId: id },
-    })
-
-    await tx.project.delete({
+  async remove(id: number) {
+    const project = await this.prisma.project.findUnique({
       where: { id },
-    })
-  })
+      select: {
+        id: true,
+        files: {
+          select: {
+            storageKey: true,
+          },
+        },
+        media: {
+          select: {
+            storageKey: true,
+          },
+        },
+      },
+    });
 
-  await Promise.all(
-    storageKeys.map((storageKey) =>
-      unlink(join(process.cwd(), 'uploads', storageKey)).catch(
-        () => undefined,
+    if (!project) {
+      throw new NotFoundException(`Проєкт з ID ${id} не знайдено`);
+    }
+
+    const storageKeys = [
+      ...project.files.map((file) => file.storageKey),
+      ...project.media.map((media) => media.storageKey),
+    ];
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.projectContact.deleteMany({
+        where: { projectId: id },
+      });
+
+      await tx.financialTransaction.deleteMany({
+        where: { projectId: id },
+      });
+
+      await tx.projectFile.deleteMany({
+        where: { projectId: id },
+      });
+
+      await tx.projectMedia.deleteMany({
+        where: { projectId: id },
+      });
+
+      await tx.project.delete({
+        where: { id },
+      });
+    });
+
+    await Promise.all(
+      storageKeys.map((storageKey) =>
+        unlink(join(process.cwd(), 'uploads', storageKey)).catch(
+          () => undefined,
+        ),
       ),
-    ),
-  )
+    );
 
-  return {
-    message: 'Проєкт видалено',
+    return {
+      message: 'Проєкт видалено',
+    };
   }
-}
 }
