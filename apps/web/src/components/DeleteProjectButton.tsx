@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
+import { useAuth } from '../auth/AuthContext'
 import { deleteProject } from '../lib/api'
 
 type DeleteProjectButtonProps = {
@@ -13,7 +14,12 @@ export function DeleteProjectButton({
   projectName,
   onDeleted,
 }: DeleteProjectButtonProps) {
+  const { canManage } = useAuth()
   const [isDeleting, setIsDeleting] = useState(false)
+
+  if (!canManage) {
+    return null
+  }
 
   async function handleDelete() {
     const confirmed = window.confirm(
@@ -48,7 +54,6 @@ export function DeleteProjectButton({
       className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
     >
       <Trash2 size={16} />
-
       {isDeleting ? 'Видалення...' : 'Видалити'}
     </button>
   )

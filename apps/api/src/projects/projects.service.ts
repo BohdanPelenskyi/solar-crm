@@ -1,17 +1,54 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
+import { ContactRole } from '../generated/prisma/client';
 
 @Injectable()
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(createProjectDto: CreateProjectDto) {
+  async create(createProjectDto: CreateProjectDto) {
+    const {
+      contactFullName,
+      contactPhone,
+      contactRole,
+      contactPosition,
+      ...projectData
+    } = createProjectDto;
+
+    const fullName = contactFullName?.trim();
+    const phone = contactPhone?.trim();
+    const position = contactPosition?.trim();
+
+    if (Boolean(fullName) !== Boolean(phone)) {
+      throw new BadRequestException(
+        'Для контакту потрібно вказати і ПІБ, і телефон',
+      );
+    }
+
     return this.prisma.project.create({
-      data: createProjectDto,
+      data: {
+        ...projectData,
+        contacts:
+          fullName && phone
+            ? {
+                create: {
+                  fullName,
+                  phone,
+                  role: contactRole ?? ContactRole.OWNER,
+                  position: position || undefined,
+                  isPrimary: true,
+                },
+              }
+            : undefined,
+      },
     });
   }
 

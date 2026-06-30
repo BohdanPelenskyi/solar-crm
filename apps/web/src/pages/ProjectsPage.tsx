@@ -181,22 +181,6 @@ selectedSort,
 selectedStatus,
 ])
 
-const visibleFinancialTotals = useMemo(() => {
-return filteredProjects.reduce(
-(total, project) => ({
-income: total.income + project.financialSummary.income,
-expenses:
-total.expenses + project.financialSummary.expenses,
-margin: total.margin + project.financialSummary.margin,
-}),
-{
-income: 0,
-expenses: 0,
-margin: 0,
-},
-)
-}, [filteredProjects])
-
 function clearFilters() {
 setSearch('')
 setSelectedStatus('ALL')
@@ -236,45 +220,7 @@ return ( <main className="min-h-screen bg-slate-100 px-5 py-7 sm:px-8"> <div cla
         </span>
       </div>
 
-      {!isLoading && !error && (
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl bg-emerald-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-              Прихід
-            </p>
-
-            <p className="mt-1 text-xl font-bold text-emerald-800">
-              {formatMoney(visibleFinancialTotals.income)}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-rose-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-rose-700">
-              Витрати
-            </p>
-
-            <p className="mt-1 text-xl font-bold text-rose-800">
-              {formatMoney(visibleFinancialTotals.expenses)}
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-blue-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
-              Маржа
-            </p>
-
-            <p
-              className={`mt-1 text-xl font-bold ${
-                visibleFinancialTotals.margin >= 0
-                  ? 'text-blue-800'
-                  : 'text-rose-700'
-              }`}
-            >
-              {formatMoney(visibleFinancialTotals.margin)}
-            </p>
-          </div>
-        </div>
-      )}
+      
 
       <div className="mt-6 grid gap-3 lg:grid-cols-4">
         <label className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 lg:col-span-2">
@@ -378,7 +324,7 @@ return ( <main className="min-h-screen bg-slate-100 px-5 py-7 sm:px-8"> <div cla
       {!isLoading && !error && (
         <>
           <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[1250px] border-collapse">
+            <table className="w-full min-w-[1100px] border-collapse">
               <thead>
                 <tr className="border-y border-slate-100 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <th className="px-3 py-4">Назва проєкту</th>
@@ -387,7 +333,6 @@ return ( <main className="min-h-screen bg-slate-100 px-5 py-7 sm:px-8"> <div cla
                   <th className="px-3 py-4">Контакт</th>
                   <th className="px-3 py-4 text-right">Прихід</th>
                   <th className="px-3 py-4 text-right">Витрати</th>
-                  <th className="px-3 py-4 text-right">Маржа</th>
                   <th className="px-3 py-4 text-right" />
                 </tr>
               </thead>
@@ -449,16 +394,6 @@ return ( <main className="min-h-screen bg-slate-100 px-5 py-7 sm:px-8"> <div cla
 
                       <td className="px-3 py-5 text-right font-semibold text-rose-700">
                         {formatMoney(summary.expenses)}
-                      </td>
-
-                      <td
-                        className={`px-3 py-5 text-right font-bold ${
-                          summary.margin >= 0
-                            ? 'text-blue-700'
-                            : 'text-rose-700'
-                        }`}
-                      >
-                        {formatMoney(summary.margin)}
                       </td>
 
                       <td className="px-3 py-5 text-right">

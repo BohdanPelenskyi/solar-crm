@@ -6,6 +6,7 @@ ClipboardList,
 Plus,
 Trash2,
 } from 'lucide-react'
+import { useAuth } from '../auth/AuthContext'
 import {
 createProjectTask,
 deleteProjectTask,
@@ -81,6 +82,7 @@ projectId,
 tasks,
 onChanged,
 }: ProjectTasksProps) {
+const { canAdd, canManage } = useAuth()
 const [isOpen, setIsOpen] = useState(false)
 const [isSaving, setIsSaving] = useState(false)
 const [updatingTaskId, setUpdatingTaskId] = useState<number | null>(null)
@@ -201,14 +203,16 @@ return (
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={openModal}
-        className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-      >
-        <Plus size={17} />
-        Додати завдання
-      </button>
+      {canAdd && (
+        <button
+          type="button"
+          onClick={openModal}
+          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+        >
+          <Plus size={17} />
+          Додати завдання
+        </button>
+      )}
     </div>
 
     {tasks.length === 0 ? (
@@ -255,39 +259,50 @@ return (
             </div>
 
             <div className="flex items-center gap-2">
-              <select
-                value={task.status}
-                disabled={updatingTaskId === task.id}
-                onChange={(event) =>
-                  void handleStatusChange(
-                    task,
-                    event.target.value as ApiTaskStatus,
-                  )
-                }
-                className={`rounded-xl border-0 px-3 py-2 text-sm font-semibold outline-none ${statusClasses[task.status]} disabled:opacity-50`}
-              >
-                {Object.entries(statusLabels).map(
-                  ([status, label]) => (
-                    <option key={status} value={status}>
-                      {label}
-                    </option>
-                  ),
-                )}
-              </select>
-              
-              <EditTaskPanel
-              task={task}
-              onUpdated={onChanged}
-              />
-              <button
-                type="button"
-                disabled={deletingTaskId === task.id}
-                onClick={() => void handleDelete(task)}
-                className="rounded-xl p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-                title="Видалити завдання"
-              >
-                <Trash2 size={18} />
-              </button>
+              {canManage ? (
+                <>
+                  <select
+                    value={task.status}
+                    disabled={updatingTaskId === task.id}
+                    onChange={(event) =>
+                      void handleStatusChange(
+                        task,
+                        event.target.value as ApiTaskStatus,
+                      )
+                    }
+                    className={`rounded-xl border-0 px-3 py-2 text-sm font-semibold outline-none ${statusClasses[task.status]} disabled:opacity-50`}
+                  >
+                    {Object.entries(statusLabels).map(
+                      ([status, label]) => (
+                        <option key={status} value={status}>
+                          {label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+
+                  <EditTaskPanel
+                    task={task}
+                    onUpdated={onChanged}
+                  />
+
+                  <button
+                    type="button"
+                    disabled={deletingTaskId === task.id}
+                    onClick={() => void handleDelete(task)}
+                    className="rounded-xl p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                    title="Видалити завдання"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </>
+              ) : (
+                <span
+                  className={`rounded-xl px-3 py-2 text-sm font-semibold ${statusClasses[task.status]}`}
+                >
+                  {statusLabels[task.status]}
+                </span>
+              )}
             </div>
           </article>
         ))}

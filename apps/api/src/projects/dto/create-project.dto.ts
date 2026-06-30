@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
-import { ProjectStatus } from '../../generated/prisma/client';
+import { ContactRole, ProjectStatus } from '../../generated/prisma/client';
 
 export class CreateProjectDto {
   @IsString()
@@ -24,4 +24,23 @@ export class CreateProjectDto {
   @IsString()
   @MaxLength(2000)
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  contactFullName?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  contactPhone?: string;
+
+  @IsOptional()
+  @IsEnum(ContactRole)
+  contactRole?: ContactRole;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  contactPosition?: string;
 }

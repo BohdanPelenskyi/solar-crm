@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Plus } from 'lucide-react'
 import {
   createProject,
+  type ApiContactRole,
   type ApiProjectStatus,
 } from '../lib/api'
 
@@ -18,20 +19,32 @@ const statusLabels: Record<ApiProjectStatus, string> = {
   CANCELED: 'Скасовано',
 }
 
+const contactRoleLabels: Record<ApiContactRole, string> = {
+  OWNER: 'Власник',
+  ACCOUNTANT: 'Бухгалтер',
+  ELECTRICIAN: 'Електрик',
+  MANAGER: 'Менеджер',
+  OTHER: 'Інше',
+}
+
+const initialForm = {
+  name: '',
+  status: 'DRAFT' as ApiProjectStatus,
+  source: '',
+  location: '',
+  contactFullName: '',
+  contactPhone: '',
+  contactRole: 'OWNER' as ApiContactRole,
+  contactPosition: '',
+}
+
 export function CreateProjectPanel({
   onCreated,
 }: CreateProjectPanelProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
-
-  const [form, setForm] = useState({
-    name: '',
-    status: 'DRAFT' as ApiProjectStatus,
-    source: '',
-    location: '',
-    notes: '',
-  })
+  const [form, setForm] = useState(initialForm)
 
   function closeModal() {
     if (isSaving) {
@@ -54,19 +67,15 @@ export function CreateProjectPanel({
         status: form.status,
         source: form.source.trim() || undefined,
         location: form.location.trim() || undefined,
-        notes: form.notes.trim() || undefined,
+        contactFullName: form.contactFullName.trim(),
+        contactPhone: form.contactPhone.trim(),
+        contactRole: form.contactRole,
+        contactPosition: form.contactPosition.trim() || undefined,
       })
 
       await onCreated()
 
-      setForm({
-        name: '',
-        status: 'DRAFT',
-        source: '',
-        location: '',
-        notes: '',
-      })
-
+      setForm(initialForm)
       setIsOpen(false)
     } catch (requestError) {
       setError(
@@ -102,7 +111,7 @@ export function CreateProjectPanel({
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Створи картку нового об’єкта для CRM
+                Створи картку нового об’єкта та основний контакт клієнта
               </p>
             </div>
 
@@ -185,22 +194,95 @@ export function CreateProjectPanel({
                 />
               </label>
 
-              <label className="block sm:col-span-2">
+              <div className="sm:col-span-2 border-t border-slate-100 pt-5">
+                <h3 className="font-bold text-slate-900">
+                  Основний контакт
+                </h3>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Контакт автоматично буде доданий у блок «Контакти».
+                </p>
+              </div>
+
+              <label className="block">
                 <span className="text-sm font-semibold text-slate-700">
-                  Нотатки
+                  ПІБ контакту
                 </span>
 
-                <textarea
-                  value={form.notes}
+                <input
+                  required
+                  value={form.contactFullName}
                   onChange={(event) =>
                     setForm((current) => ({
                       ...current,
-                      notes: event.target.value,
+                      contactFullName: event.target.value,
                     }))
                   }
-                  placeholder="Короткий опис, деталі дзвінка, особливості об’єкта..."
-                  rows={4}
-                  className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
+                  placeholder="Наприклад: Іван Петренко"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-700">
+                  Телефон
+                </span>
+
+                <input
+                  required
+                  type="tel"
+                  value={form.contactPhone}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      contactPhone: event.target.value,
+                    }))
+                  }
+                  placeholder="+380..."
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-700">
+                  Роль контакту
+                </span>
+
+                <select
+                  value={form.contactRole}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      contactRole: event.target.value as ApiContactRole,
+                    }))
+                  }
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
+                >
+                  {Object.entries(contactRoleLabels).map(
+                    ([role, label]) => (
+                      <option key={role} value={role}>
+                        {label}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-700">
+                  Посада
+                </span>
+
+                <input
+                  value={form.contactPosition}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      contactPosition: event.target.value,
+                    }))
+                  }
+                  placeholder="Наприклад: директор"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
                 />
               </label>
 

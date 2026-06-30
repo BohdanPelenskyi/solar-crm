@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { unlink } from 'node:fs/promises'
 import { join } from 'node:path'
+import { FileCategory } from '../generated/prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateFileDto } from './dto/create-file.dto'
 
@@ -38,17 +39,36 @@ export class FilesService {
   ) {
     await this.ensureProjectExists(projectId)
 
+    const isFinalProposal =
+      createFileDto.category === FileCategory.PROPOSAL &&
+      createFileDto.isFinal === true
+
     try {
-      return await this.prisma.projectFile.create({
-        data: {
-          projectId,
-          category: createFileDto.category,
-          originalName: uploadedFile.originalname,
-          storageKey: `documents/${uploadedFile.filename}`,
-          mimeType: uploadedFile.mimetype,
-          size: uploadedFile.size,
-          isFinal: createFileDto.isFinal ?? false,
-        },
+      return await this.prisma.$transaction(async (transaction) => {
+        if (isFinalProposal) {
+          await transaction.projectFile.updateMany({
+            where: {
+              projectId,
+              category: FileCategory.PROPOSAL,
+              isFinal: true,
+            },
+            data: {
+              isFinal: false,
+            },
+          })
+        }
+
+        return transaction.projectFile.create({
+          data: {
+            projectId,
+            category: createFileDto.category,
+            originalName: uploadedFile.originalname,
+            storageKey: `documents/${uploadedFile.filename}`,
+            mimeType: uploadedFile.mimetype,
+            size: uploadedFile.size,
+            isFinal: isFinalProposal,
+          },
+        })
       })
     } catch (error) {
       await unlink(uploadedFile.path).catch(() => undefined)
@@ -61,9 +81,10 @@ export class FilesService {
 
     return this.prisma.projectFile.findMany({
       where: { projectId },
-      orderBy: {
-        uploadedAt: 'desc',
-      },
+      orderBy: [
+        { isFinal: 'desc' },
+        { uploadedAt: 'desc' },
+      ],
     })
   }
 

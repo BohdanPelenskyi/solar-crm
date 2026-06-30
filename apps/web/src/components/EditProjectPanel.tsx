@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Pencil } from 'lucide-react'
+import { useAuth } from '../auth/AuthContext'
 import {
   updateProject,
   type ApiProjectStatus,
@@ -11,7 +12,6 @@ type EditableProject = {
   status: ApiProjectStatus
   source: string | null
   location: string | null
-  notes: string | null
 }
 
 type EditProjectPanelProps = {
@@ -32,6 +32,7 @@ export function EditProjectPanel({
   project,
   onUpdated,
 }: EditProjectPanelProps) {
+  const { canManage } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
@@ -41,8 +42,11 @@ export function EditProjectPanel({
     status: project.status,
     source: project.source ?? '',
     location: project.location ?? '',
-    notes: project.notes ?? '',
   })
+
+  if (!canManage) {
+    return null
+  }
 
   function openModal() {
     setForm({
@@ -50,7 +54,6 @@ export function EditProjectPanel({
       status: project.status,
       source: project.source ?? '',
       location: project.location ?? '',
-      notes: project.notes ?? '',
     })
 
     setError('')
@@ -83,7 +86,6 @@ export function EditProjectPanel({
         status: form.status,
         source: form.source.trim() || undefined,
         location: form.location.trim() || undefined,
-        notes: form.notes.trim() || undefined,
       })
 
       await onUpdated()
@@ -179,6 +181,7 @@ export function EditProjectPanel({
                       source: event.target.value,
                     }))
                   }
+                  placeholder="Instagram, Google, рекомендація..."
                   className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 />
               </label>
@@ -196,25 +199,8 @@ export function EditProjectPanel({
                       location: event.target.value,
                     }))
                   }
+                  placeholder="Наприклад: м. Львів, вул. Зелена"
                   className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                />
-              </label>
-
-              <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-slate-700">
-                  Нотатки
-                </span>
-
-                <textarea
-                  rows={4}
-                  value={form.notes}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      notes: event.target.value,
-                    }))
-                  }
-                  className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 />
               </label>
 

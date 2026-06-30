@@ -10,8 +10,9 @@ type CreateDocumentPanelProps = {
   onCreated: () => Promise<void> | void
 }
 
-const categoryLabels: Record<ApiFileCategory, string> = {
-  PROPOSAL: 'Комерційна пропозиція',
+type GeneralFileCategory = Exclude<ApiFileCategory, 'PROPOSAL'>
+
+const categoryLabels: Record<GeneralFileCategory, string> = {
   PROJECT_DOCUMENT: 'Проєктна документація',
   FINANCIAL_DOCUMENT: 'Фінансовий документ',
   OTHER: 'Інший документ',
@@ -28,13 +29,11 @@ export function CreateDocumentPanel({
   const [error, setError] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [category, setCategory] =
-    useState<ApiFileCategory>('PROJECT_DOCUMENT')
-  const [isFinal, setIsFinal] = useState(false)
+    useState<GeneralFileCategory>('PROJECT_DOCUMENT')
 
   function resetForm() {
     setSelectedFile(null)
     setCategory('PROJECT_DOCUMENT')
-    setIsFinal(false)
     setError('')
 
     if (inputRef.current) {
@@ -72,7 +71,7 @@ export function CreateDocumentPanel({
         projectId,
         selectedFile,
         category,
-        isFinal,
+        false,
       )
 
       await onCreated()
@@ -134,7 +133,10 @@ export function CreateDocumentPanel({
 
                 {selectedFile && (
                   <p className="mt-2 text-sm text-slate-600">
-                    Обрано: <span className="font-semibold">{selectedFile.name}</span>
+                    Обрано:{' '}
+                    <span className="font-semibold">
+                      {selectedFile.name}
+                    </span>
                   </p>
                 )}
               </label>
@@ -147,7 +149,9 @@ export function CreateDocumentPanel({
                 <select
                   value={category}
                   onChange={(event) =>
-                    setCategory(event.target.value as ApiFileCategory)
+                    setCategory(
+                      event.target.value as GeneralFileCategory,
+                    )
                   }
                   className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 >
@@ -159,19 +163,6 @@ export function CreateDocumentPanel({
                     ),
                   )}
                 </select>
-              </label>
-
-              <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-slate-50 px-3 py-3">
-                <input
-                  type="checkbox"
-                  checked={isFinal}
-                  onChange={(event) => setIsFinal(event.target.checked)}
-                  className="h-4 w-4"
-                />
-
-                <span className="text-sm font-medium text-slate-700">
-                  Це фінальна версія документа
-                </span>
               </label>
 
               {error && (

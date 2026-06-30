@@ -17,6 +17,8 @@ import {
 type AuthContextValue = {
   user: ApiAuthenticatedUser | null
   isInitializing: boolean
+  canAdd: boolean
+  canManage: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
 }
@@ -79,11 +81,18 @@ export function AuthProvider({
     setUser(null)
   }
 
+  const canAdd =
+    user?.role === 'ADMIN' || user?.role === 'WORKER'
+
+  const canManage = user?.role === 'ADMIN'
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isInitializing,
+        canAdd,
+        canManage,
         login,
         logout,
       }}

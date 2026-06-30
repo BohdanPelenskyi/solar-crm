@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { useAuth } from '../auth/AuthContext'
 import {
 CalendarDays,
 CheckCircle2,
@@ -121,6 +122,7 @@ return dueDate > today && dueDate <= nextWeek
 }
 
 export function TasksPage() {
+const { canManage } = useAuth()
 const [tasks, setTasks] = useState<ApiGlobalTask[]>([])
 const [isLoading, setIsLoading] = useState(true)
 const [error, setError] = useState('')
@@ -475,40 +477,50 @@ SOLAR CRM
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
-                <select
-                  value={task.status}
-                  disabled={updatingTaskId === task.id}
-                  onChange={(event) =>
-                    void handleStatusChange(
-                      task,
-                      event.target.value as ApiTaskStatus,
-                    )
-                  }
-                  className={`rounded-xl border-0 px-3 py-2 text-sm font-semibold outline-none ${statusClasses[task.status]} disabled:opacity-50`}
-                >
-                  {Object.entries(statusLabels).map(
-                    ([status, label]) => (
-                      <option key={status} value={status}>
-                        {label}
-                      </option>
-                    ),
-                  )}
-                </select>
+                {canManage ? (
+                  <>
+                    <select
+                      value={task.status}
+                      disabled={updatingTaskId === task.id}
+                      onChange={(event) =>
+                        void handleStatusChange(
+                          task,
+                          event.target.value as ApiTaskStatus,
+                        )
+                      }
+                      className={`rounded-xl border-0 px-3 py-2 text-sm font-semibold outline-none ${statusClasses[task.status]} disabled:opacity-50`}
+                    >
+                      {Object.entries(statusLabels).map(
+                        ([status, label]) => (
+                          <option key={status} value={status}>
+                            {label}
+                          </option>
+                        ),
+                      )}
+                    </select>
 
-                <EditTaskPanel
-                task={task}
-                onUpdated={loadTasks}
-                />
-                
-                <button
-                  type="button"
-                  disabled={deletingTaskId === task.id}
-                  onClick={() => void handleDelete(task)}
-                  title="Видалити завдання"
-                  className="rounded-xl p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-                >
-                  <Trash2 size={18} />
-                </button>
+                    <EditTaskPanel
+                      task={task}
+                      onUpdated={loadTasks}
+                    />
+
+                    <button
+                      type="button"
+                      disabled={deletingTaskId === task.id}
+                      onClick={() => void handleDelete(task)}
+                      title="Видалити завдання"
+                      className="rounded-xl p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </>
+                ) : (
+                  <span
+                    className={`rounded-xl px-3 py-2 text-sm font-semibold ${statusClasses[task.status]}`}
+                  >
+                    {statusLabels[task.status]}
+                  </span>
+                )}
               </div>
             </article>
           ))}

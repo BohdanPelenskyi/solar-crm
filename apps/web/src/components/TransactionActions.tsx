@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
+import { useAuth } from '../auth/AuthContext'
 import {
   deleteProjectTransaction,
   updateProjectTransaction,
@@ -55,6 +56,7 @@ export function TransactionActions({
   transaction,
   onChanged,
 }: TransactionActionsProps) {
+  const { canManage } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -62,6 +64,10 @@ export function TransactionActions({
   const [form, setForm] = useState<TransactionForm>(
     getInitialForm(transaction),
   )
+
+  if (!canManage) {
+    return null
+  }
 
   const operationLabel =
     transaction.type === 'INCOME' ? 'прихід' : 'витрату'

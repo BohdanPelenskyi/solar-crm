@@ -7,7 +7,7 @@ const nativeFetch = globalThis.fetch.bind(globalThis)
 const AUTH_TOKEN_STORAGE_KEY = 'solar_crm_access_token'
 
 
-export type ApiUserRole = 'ADMIN' | 'VIEWER'
+export type ApiUserRole = 'ADMIN' | 'WORKER' | 'VIEWER'
 
 export type ApiAuthenticatedUser = {
   id: number
@@ -291,6 +291,10 @@ export type CreateProjectPayload = {
   source?: string
   location?: string
   notes?: string
+  contactFullName: string
+  contactPhone: string
+  contactRole?: ApiContactRole
+  contactPosition?: string
 }
 
 export type CreatedProject = {
@@ -456,7 +460,13 @@ export async function uploadProjectMedia(
   return response.json() as Promise<ApiProjectMedia>
 }
 
-export type UpdateProjectPayload = Partial<CreateProjectPayload>
+export type UpdateProjectPayload = {
+  name?: string
+  status?: ApiProjectStatus
+  source?: string
+  location?: string
+  notes?: string
+}
 
 export async function updateProject(
   projectId: number,

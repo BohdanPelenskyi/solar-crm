@@ -13,11 +13,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
+import { randomUUID } from 'node:crypto'
 import { mkdirSync } from 'node:fs'
 import { unlink } from 'node:fs/promises'
 import { extname, join } from 'node:path'
-import { randomUUID } from 'node:crypto'
 import { diskStorage } from 'multer'
+import { FileCategory } from '../generated/prisma/client'
 import { CreateFileDto } from './dto/create-file.dto'
 import { FilesService } from './files.service'
 
@@ -73,6 +74,17 @@ export class FilesController {
 
       throw new BadRequestException(
         'Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG та WEBP',
+      )
+    }
+
+    if (
+      createFileDto.category === FileCategory.PROPOSAL &&
+      file.mimetype !== 'application/pdf'
+    ) {
+      await unlink(file.path).catch(() => undefined)
+
+      throw new BadRequestException(
+        'Комерційна пропозиція має бути у форматі PDF',
       )
     }
 
