@@ -1,4 +1,5 @@
 import {
+CalendarDays,
 ClipboardList,
 FolderKanban,
 LayoutDashboard,
@@ -18,6 +19,11 @@ label: 'Завдання',
 icon: ClipboardList,
 },
 {
+to: '/calendar',
+label: 'Календар',
+icon: CalendarDays,
+},
+{
 to: '/projects',
 label: 'Проєкти',
 icon: FolderKanban,
@@ -25,14 +31,10 @@ icon: FolderKanban,
 ]
 
 export function AppLayout() {
-return (
-<div className="min-h-screen bg-slate-50">
-<header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
-<div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-7">
-<NavLink to="/dashboard" className="flex items-center gap-2.5" >
-<span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
-<Sun size={20} />
-</span>
+return ( <div className="min-h-screen bg-slate-50"> <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur"> <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-7"> <NavLink
+         to="/dashboard"
+         className="flex items-center gap-2.5"
+       > <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm"> <Sun size={20} /> </span>
 
         <span className="text-base font-bold tracking-tight text-slate-900">
           SOLAR CRM
@@ -70,6 +72,7 @@ return (
 
   <Outlet />
 </div>
+
 
 )
 }
