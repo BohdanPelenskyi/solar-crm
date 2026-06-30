@@ -476,8 +476,13 @@ export type CreateProjectTaskPayload = {
   dueDate?: string
 }
 
-export type UpdateProjectTaskPayload =
-  Partial<CreateProjectTaskPayload>
+export type UpdateProjectTaskPayload = {
+  title?: string
+  description?: string | null
+  status?: ApiTaskStatus
+  priority?: ApiTaskPriority
+  dueDate?: string | null
+}
 
 function getErrorMessage(
   body: unknown,

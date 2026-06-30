@@ -17,6 +17,7 @@ type ApiGlobalTask,
 type ApiTaskPriority,
 type ApiTaskStatus,
 } from '../lib/api'
+import { EditTaskPanel } from '../components/EditTaskPanel'
 
 type DeadlineFilter =
 | 'ALL'
@@ -494,6 +495,11 @@ SOLAR CRM
                   )}
                 </select>
 
+                <EditTaskPanel
+                task={task}
+                onUpdated={loadTasks}
+                />
+                
                 <button
                   type="button"
                   disabled={deletingTaskId === task.id}

@@ -14,6 +14,7 @@ type ApiProjectTask,
 type ApiTaskPriority,
 type ApiTaskStatus,
 } from '../lib/api'
+import { EditTaskPanel } from './EditTaskPanel'
 
 type ProjectTasksProps = {
 projectId: number
@@ -273,7 +274,11 @@ return (
                   ),
                 )}
               </select>
-
+              
+              <EditTaskPanel
+              task={task}
+              onUpdated={onChanged}
+              />
               <button
                 type="button"
                 disabled={deletingTaskId === task.id}

@@ -78,22 +78,28 @@ export class TasksService {
     },
   })
   }
-  async update(id: number, updateTaskDto: UpdateTaskDto) {
-    await this.findTaskOrThrow(id)
+async update(id: number, updateTaskDto: UpdateTaskDto) {
+  await this.findTaskOrThrow(id)
 
-    const { dueDate, ...data } = updateTaskDto
+  const { dueDate, ...data } = updateTaskDto
 
-    return this.prisma.projectTask.update({
-      where: { id },
-      data: {
-        ...data,
-        ...(dueDate !== undefined
-          ? { dueDate: new Date(dueDate) }
-          : {}),
-      },
-    })
-  }
+  const hasDueDate = Object.prototype.hasOwnProperty.call(
+    updateTaskDto,
+    'dueDate',
+  )
 
+  return this.prisma.projectTask.update({
+    where: { id },
+    data: {
+      ...data,
+      ...(hasDueDate
+        ? {
+            dueDate: dueDate ? new Date(dueDate) : null,
+          }
+        : {}),
+    },
+  })
+}
   async remove(id: number) {
     await this.findTaskOrThrow(id)
 
