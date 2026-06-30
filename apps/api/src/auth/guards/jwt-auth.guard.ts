@@ -3,18 +3,18 @@ import {
   ExecutionContext,
   Injectable,
   UnauthorizedException,
-} from '@nestjs/common'
-import { JwtService } from '@nestjs/jwt'
-import { Reflector } from '@nestjs/core'
-import { AuthTokenPayload } from '../auth-token-payload'
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator'
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { Reflector } from '@nestjs/core';
+import { AuthTokenPayload } from '../auth-token-payload';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 type RequestWithUser = {
   headers: {
-    authorization?: string
-  }
-  user?: AuthTokenPayload
-}
+    authorization?: string;
+  };
+  user?: AuthTokenPayload;
+};
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -24,39 +24,35 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(
-      IS_PUBLIC_KEY,
-      [context.getHandler(), context.getClass()],
-    )
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (isPublic) {
-      return true
+      return true;
     }
 
-    const request = context
-      .switchToHttp()
-      .getRequest<RequestWithUser>()
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
 
-    const token = this.extractToken(request)
+    const token = this.extractToken(request);
 
     if (!token) {
-      throw new UnauthorizedException('Потрібна авторизація')
+      throw new UnauthorizedException('Потрібна авторизація');
     }
 
     try {
-      request.user =
-        await this.jwtService.verifyAsync<AuthTokenPayload>(token)
+      request.user = await this.jwtService.verifyAsync<AuthTokenPayload>(token);
 
-      return true
+      return true;
     } catch {
-      throw new UnauthorizedException('Сесія недійсна або завершилась')
+      throw new UnauthorizedException('Сесія недійсна або завершилась');
     }
   }
 
   private extractToken(request: RequestWithUser) {
-    const [type, token] =
-      request.headers.authorization?.split(' ') ?? []
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
 
-    return type === 'Bearer' ? token : undefined
+    return type === 'Bearer' ? token : undefined;
   }
 }

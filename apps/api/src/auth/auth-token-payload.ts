@@ -1,8 +1,8 @@
-import { UserRole } from '../generated/prisma/client'
+import { UserRole } from '../generated/prisma/client';
 
 export type AuthTokenPayload = {
-  sub: number
-  email: string
-  fullName: string
-  role: UserRole
-}
+  sub: number;
+  email: string;
+  fullName: string;
+  role: UserRole;
+};

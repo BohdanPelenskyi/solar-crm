@@ -1,20 +1,13 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common'
-import { AuthService } from './auth.service'
-import { AuthTokenPayload } from './auth-token-payload'
-import { LoginDto } from './dto/login.dto'
-import { JwtAuthGuard } from './guards/jwt-auth.guard'
-import { Public } from './decorators/public.decorator'
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { AuthTokenPayload } from './auth-token-payload';
+import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Public } from './decorators/public.decorator';
 
 type AuthorizedRequest = {
-  user: AuthTokenPayload
-}
+  user: AuthTokenPayload;
+};
 
 @Controller('auth')
 export class AuthController {
@@ -23,12 +16,12 @@ export class AuthController {
   @Public()
   @Post('login')
   login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto)
+    return this.authService.login(loginDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getMe(@Req() request: AuthorizedRequest) {
-    return this.authService.getProfile(request.user.sub)
+    return this.authService.getProfile(request.user.sub);
   }
 }

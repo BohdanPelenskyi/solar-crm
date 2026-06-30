@@ -1,20 +1,17 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common'
-import { JwtService } from '@nestjs/jwt'
-import { compare } from 'bcryptjs'
-import { UserRole } from '../generated/prisma/client'
-import { PrismaService } from '../prisma/prisma.service'
-import { AuthTokenPayload } from './auth-token-payload'
-import { LoginDto } from './dto/login.dto'
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { compare } from 'bcryptjs';
+import { UserRole } from '../generated/prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { AuthTokenPayload } from './auth-token-payload';
+import { LoginDto } from './dto/login.dto';
 
 type SafeUser = {
-  id: number
-  email: string
-  fullName: string
-  role: UserRole
-}
+  id: number;
+  email: string;
+  fullName: string;
+  role: UserRole;
+};
 
 @Injectable()
 export class AuthService {
@@ -24,23 +21,31 @@ export class AuthService {
   ) {}
 
   async login(loginDto: LoginDto) {
-    const email = loginDto.email.trim().toLowerCase()
+    const email = loginDto.email.trim().toLowerCase();
 
     const user = await this.prisma.user.findUnique({
       where: { email },
-    })
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        isActive: true,
+        passwordHash: true,
+      },
+    });
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Невірний email або пароль')
+      throw new UnauthorizedException('Невірний email або пароль');
     }
 
     const isPasswordCorrect = await compare(
       loginDto.password,
       user.passwordHash,
-    )
+    );
 
     if (!isPasswordCorrect) {
-      throw new UnauthorizedException('Невірний email або пароль')
+      throw new UnauthorizedException('Невірний email або пароль');
     }
 
     const payload: AuthTokenPayload = {
@@ -48,14 +53,14 @@ export class AuthService {
       email: user.email,
       fullName: user.fullName,
       role: user.role,
-    }
+    };
 
-    const accessToken = await this.jwtService.signAsync(payload)
+    const accessToken = await this.jwtService.signAsync(payload);
 
     return {
       accessToken,
       user: this.toSafeUser(user),
-    }
+    };
   }
 
   async getProfile(userId: number) {
@@ -68,13 +73,13 @@ export class AuthService {
         role: true,
         isActive: true,
       },
-    })
+    });
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Сесія недійсна')
+      throw new UnauthorizedException('Сесія недійсна');
     }
 
-    return this.toSafeUser(user)
+    return this.toSafeUser(user);
   }
 
   private toSafeUser(user: SafeUser) {
@@ -83,6 +88,6 @@ export class AuthService {
       email: user.email,
       fullName: user.fullName,
       role: user.role,
-    }
+    };
   }
 }
