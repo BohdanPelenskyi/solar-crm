@@ -1,4 +1,117 @@
-export const API_URL = 'http://localhost:3000/api'
+const API_URL =
+  import.meta.env.VITE_API_URL ??
+  (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api')
+
+const nativeFetch = globalThis.fetch.bind(globalThis)
+
+const AUTH_TOKEN_STORAGE_KEY = 'solar_crm_access_token'
+
+
+export type ApiUserRole = 'ADMIN' | 'VIEWER'
+
+export type ApiAuthenticatedUser = {
+  id: number
+  email: string
+  fullName: string
+  role: ApiUserRole
+}
+
+export type ApiLoginResponse = {
+  accessToken: string
+  user: ApiAuthenticatedUser
+}
+
+export function getAccessToken() {
+  return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY)
+}
+
+export function setAccessToken(token: string) {
+  localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token)
+}
+
+export function clearAccessToken() {
+  localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY)
+}
+
+async function apiFetch(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+) {
+  const headers = new Headers(init.headers)
+  const token = getAccessToken()
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
+
+  return nativeFetch(input, {
+    ...init,
+    headers,
+  })
+}
+
+async function getResponseError(
+  response: Response,
+  fallbackMessage: string,
+) {
+  const data: unknown = await response.json().catch(() => null)
+
+  if (data && typeof data === 'object' && 'message' in data) {
+    const message = (data as { message?: unknown }).message
+
+    if (typeof message === 'string') {
+      return message
+    }
+
+    if (Array.isArray(message)) {
+      return message.join(', ')
+    }
+  }
+
+  return fallbackMessage
+}
+
+export async function login(
+  email: string,
+  password: string,
+): Promise<ApiLoginResponse> {
+  const response = await apiFetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      password,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      await getResponseError(
+        response,
+        'Не вдалося виконати вхід',
+      ),
+    )
+  }
+
+  return response.json() as Promise<ApiLoginResponse>
+}
+
+export async function getCurrentUser(): Promise<ApiAuthenticatedUser> {
+  const response = await apiFetch(`${API_URL}/auth/me`)
+
+  if (!response.ok) {
+    throw new Error(
+      await getResponseError(
+        response,
+        'Не вдалося перевірити сесію',
+      ),
+    )
+  }
+
+  return response.json() as Promise<ApiAuthenticatedUser>
+}
 
 export type ApiProjectStatus =
   | 'DRAFT'
@@ -122,7 +235,7 @@ export type ApiProjectDetails = ApiProject & {
 }
 
 async function request<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`)
+  const response = await apiFetch(`${API_URL}${path}`)
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -154,7 +267,7 @@ export async function createProjectContact(
   projectId: number,
   payload: CreateProjectContactPayload,
 ): Promise<ApiProjectContact> {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/projects/${projectId}/contacts`,
     {
       method: 'POST',
@@ -194,7 +307,7 @@ export type CreatedProject = {
 export async function createProject(
   payload: CreateProjectPayload,
 ): Promise<CreatedProject> {
-  const response = await fetch(`${API_URL}/projects`, {
+  const response = await apiFetch(`${API_URL}/projects`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -223,7 +336,7 @@ export async function createProjectTransaction(
   projectId: number,
   payload: CreateProjectTransactionPayload,
 ): Promise<ApiFinancialTransaction> {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/projects/${projectId}/transactions`,
     {
       method: 'POST',
@@ -248,7 +361,7 @@ export async function updateProjectTransaction(
   transactionId: number,
   payload: UpdateProjectTransactionPayload,
 ): Promise<ApiFinancialTransaction> {
-  const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
+  const response = await apiFetch(`${API_URL}/transactions/${transactionId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -266,7 +379,7 @@ export async function updateProjectTransaction(
 export async function deleteProjectTransaction(
   transactionId: number,
 ): Promise<void> {
-  const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
+  const response = await apiFetch(`${API_URL}/transactions/${transactionId}`, {
     method: 'DELETE',
   })
 
@@ -287,7 +400,7 @@ export async function uploadProjectDocument(
   formData.append('category', category)
   formData.append('isFinal', String(isFinal))
 
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/projects/${projectId}/documents`,
     {
       method: 'POST',
@@ -321,7 +434,7 @@ export async function uploadProjectMedia(
 
   formData.append('file', file)
 
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/projects/${projectId}/media`,
     {
       method: 'POST',
@@ -349,7 +462,7 @@ export async function updateProject(
   projectId: number,
   payload: UpdateProjectPayload,
 ): Promise<CreatedProject> {
-  const response = await fetch(`${API_URL}/projects/${projectId}`, {
+  const response = await apiFetch(`${API_URL}/projects/${projectId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -367,7 +480,7 @@ export async function updateProject(
 export async function deleteProjectDocument(
   documentId: number,
 ): Promise<void> {
-  const response = await fetch(`${API_URL}/documents/${documentId}`, {
+  const response = await apiFetch(`${API_URL}/documents/${documentId}`, {
     method: 'DELETE',
   })
 
@@ -386,7 +499,7 @@ export async function deleteProjectDocument(
 export async function deleteProjectMedia(
   mediaId: number,
 ): Promise<void> {
-  const response = await fetch(`${API_URL}/media/${mediaId}`, {
+  const response = await apiFetch(`${API_URL}/media/${mediaId}`, {
     method: 'DELETE',
   })
 
@@ -414,7 +527,7 @@ export async function updateProjectContact(
   contactId: number,
   payload: UpdateProjectContactPayload,
 ): Promise<ApiProjectContact> {
-  const response = await fetch(`${API_URL}/contacts/${contactId}`, {
+  const response = await apiFetch(`${API_URL}/contacts/${contactId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -439,7 +552,7 @@ export async function updateProjectContact(
 export async function deleteProjectContact(
   contactId: number,
 ): Promise<void> {
-  const response = await fetch(`${API_URL}/contacts/${contactId}`, {
+  const response = await apiFetch(`${API_URL}/contacts/${contactId}`, {
     method: 'DELETE',
   })
 
@@ -458,7 +571,7 @@ export async function deleteProjectContact(
 export async function deleteProject(
   projectId: number,
 ): Promise<void> {
-  const response = await fetch(`${API_URL}/projects/${projectId}`, {
+  const response = await apiFetch(`${API_URL}/projects/${projectId}`, {
     method: 'DELETE',
   })
 
@@ -517,7 +630,7 @@ export async function createProjectTask(
   projectId: number,
   payload: CreateProjectTaskPayload,
 ): Promise<ApiProjectTask> {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/projects/${projectId}/tasks`,
     {
       method: 'POST',
@@ -543,7 +656,7 @@ export async function updateProjectTask(
   taskId: number,
   payload: UpdateProjectTaskPayload,
 ): Promise<ApiProjectTask> {
-  const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+  const response = await apiFetch(`${API_URL}/tasks/${taskId}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -565,7 +678,7 @@ export async function updateProjectTask(
 export async function deleteProjectTask(
   taskId: number,
 ): Promise<void> {
-  const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+  const response = await apiFetch(`${API_URL}/tasks/${taskId}`, {
     method: 'DELETE',
   })
 
@@ -609,7 +722,7 @@ export type ApiDashboardOverview = {
 }
 
 export async function getDashboardOverview(): Promise<ApiDashboardOverview> {
-  const response = await fetch(`${API_URL}/dashboard`)
+  const response = await apiFetch(`${API_URL}/dashboard`)
 
   if (!response.ok) {
     const body = await response.json().catch(() => null)
@@ -636,7 +749,7 @@ location: string | null
 }
 }
 export async function getAllTasks(): Promise<ApiGlobalTask[]> {
-const response = await fetch(`${API_URL}/tasks`)
+const response = await apiFetch(`${API_URL}/tasks`)
 
 if (!response.ok) {
 throw new Error('Не вдалося завантажити завдання')
