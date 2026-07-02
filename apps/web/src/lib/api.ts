@@ -427,7 +427,13 @@ export async function uploadProjectDocument(
 }
 
 export function getUploadUrl(storageKey: string) {
-  return `http://localhost:3000/uploads/${storageKey}`
+  const normalizedStorageKey = storageKey.replace(/^\/+/, '')
+
+  const uploadsBaseUrl = import.meta.env.DEV
+    ? 'http://localhost:3000/uploads'
+    : '/uploads'
+
+  return `${uploadsBaseUrl}/${normalizedStorageKey}`
 }
 
 export async function uploadProjectMedia(

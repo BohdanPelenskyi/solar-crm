@@ -149,7 +149,7 @@ function FinanceBlock({
           items.map((transaction) => (
             <div
               key={transaction.id}
-              className="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3 last:border-0"
+              className="flex flex-col gap-2 border-b border-slate-100 px-4 py-3 last:border-0 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
                 <p className="truncate font-semibold text-slate-800">
@@ -164,7 +164,7 @@ function FinanceBlock({
                 </p>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex w-full shrink-0 items-center justify-between gap-2 sm:w-auto">
                 <p className="whitespace-nowrap font-semibold text-slate-900">
                   {formatMoney(transaction.amount)}
                 </p>
@@ -262,7 +262,7 @@ export function ProjectDetailsPage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-slate-100 px-5 py-7 sm:px-8">
+      <main className="min-h-screen bg-slate-100 px-4 py-5 pb-24 sm:px-8 sm:py-7 md:pb-7">
         <div className="mx-auto max-w-7xl rounded-3xl bg-white p-8 text-center text-sm font-semibold text-slate-500">
           Завантаження проєкту...
         </div>
@@ -272,7 +272,7 @@ export function ProjectDetailsPage() {
 
   if (error || !project) {
     return (
-      <main className="min-h-screen bg-slate-100 px-5 py-7 sm:px-8">
+      <main className="min-h-screen bg-slate-100 px-4 py-5 pb-24 sm:px-8 sm:py-7 md:pb-7">
         <div className="mx-auto max-w-7xl">
           <Link
             to="/projects"
@@ -302,7 +302,7 @@ export function ProjectDetailsPage() {
   const status = statusInfo[project.status]
 
   return (
-    <main className="min-h-screen bg-slate-100 px-5 py-7 sm:px-8">
+    <main className="min-h-screen bg-slate-100 px-4 py-5 pb-24 sm:px-8 sm:py-7 md:pb-7">
       <div className="mx-auto max-w-7xl">
         <Link
           to="/projects"
@@ -314,23 +314,23 @@ export function ProjectDetailsPage() {
 
         <section className="mt-5 rounded-3xl bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="flex gap-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-3xl">
+            <div className="flex min-w-0 gap-3 sm:gap-4">
+              <div className="flex h-14 w-14 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-3xl">
                 ☀️
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-slate-500">
                   Назва проєкту
                 </p>
 
-                <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
+                <h1 className="mt-1 break-words text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                   {project.name}
                 </h1>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
               <EditProjectPanel
                 project={project}
                 onUpdated={refreshProject}
@@ -352,7 +352,7 @@ export function ProjectDetailsPage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-6 grid gap-x-4 gap-y-5 border-t border-slate-100 pt-6 sm:grid-cols-2 xl:grid-cols-4">
             <div className="flex gap-3">
               <WalletCards size={19} className="mt-0.5 text-blue-600" />
 
@@ -445,7 +445,7 @@ export function ProjectDetailsPage() {
         <div className="mt-5 grid gap-5 xl:grid-cols-[1.55fr_1fr]">
           <div className="space-y-5">
             <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">
                     Контакти
@@ -462,7 +462,64 @@ export function ProjectDetailsPage() {
                 />
               </div>
 
-              <div className="mt-5 overflow-x-auto">
+              <div className="mt-5 space-y-3 sm:hidden">
+                {project.contacts.length === 0 ? (
+                  <div className="rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+                    Контакти ще не додані.
+                  </div>
+                ) : (
+                  project.contacts.map((contact) => (
+                    <article
+                      key={contact.id}
+                      className="rounded-2xl border border-slate-100 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="break-words font-semibold text-slate-800">
+                            {contact.fullName}
+                          </p>
+
+                          <a
+                            href={`tel:${contact.phone}`}
+                            className="mt-1 inline-flex items-center gap-2 text-sm text-blue-700"
+                          >
+                            <Phone size={16} />
+                            {contact.phone}
+                          </a>
+                        </div>
+
+                        <ContactActions
+                          contact={contact}
+                          onChanged={refreshProject}
+                        />
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            Роль
+                          </p>
+                          <p className="mt-1 text-sm font-medium text-slate-700">
+                            {contact.position ||
+                              contactRoleLabels[contact.role]}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            Основний
+                          </p>
+                          <p className="mt-1 text-sm font-medium text-slate-700">
+                            {contact.isPrimary ? 'Так' : 'Ні'}
+                          </p>
+                        </div>
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
+
+              <div className="mt-5 hidden overflow-x-auto sm:block">
                 <table className="w-full min-w-[580px]">
                   <thead>
                     <tr className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -540,7 +597,7 @@ export function ProjectDetailsPage() {
             />
 
             <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">
                     Фото та відео
@@ -641,7 +698,7 @@ export function ProjectDetailsPage() {
             />
 
             <section className="rounded-3xl bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-lg font-bold text-slate-900">
                   Документи
                 </h2>
@@ -661,7 +718,7 @@ export function ProjectDetailsPage() {
                   {regularFiles.map((file) => (
                     <div
                       key={file.id}
-                      className="flex items-center gap-3 rounded-2xl border border-slate-100 p-3"
+                      className="flex flex-col items-stretch gap-2 rounded-2xl border border-slate-100 p-3 sm:flex-row sm:items-center sm:gap-3"
                     >
                       <a
                         href={getUploadUrl(file.storageKey)}

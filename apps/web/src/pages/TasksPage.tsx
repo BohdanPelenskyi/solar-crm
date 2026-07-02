@@ -256,13 +256,11 @@ try {
 }
 
 return (
-<main className="min-h-screen bg-slate-50">
-<div className="mx-auto max-w-7xl p-5 sm:p-7">
-<header className="flex flex-wrap items-start justify-between gap-4">
+<main className="min-h-screen bg-slate-50 pb-24 md:pb-0">
+<div className="mx-auto max-w-7xl p-4 sm:p-7">
+<header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 <div>
-<p className="text-sm font-semibold text-blue-600">
-SOLAR CRM
-</p>
+
 
         <h1 className="mt-1 text-3xl font-bold text-slate-900">
           Завдання
@@ -276,7 +274,7 @@ SOLAR CRM
       <button
         type="button"
         onClick={() => void loadTasks()}
-        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
       >
         <RefreshCw size={16} />
         Оновити
@@ -476,7 +474,7 @@ SOLAR CRM
                 </p>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
                 {canManage ? (
                   <>
                     <select
