@@ -32,7 +32,7 @@ export function LoginPage() {
   }
 
   if (user) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/projects" replace />
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -44,7 +44,7 @@ export function LoginPage() {
 
       await login(email.trim(), password)
 
-      navigate('/dashboard', {
+      navigate('/projects', {
         replace: true,
       })
     } catch (requestError) {
@@ -67,7 +67,7 @@ export function LoginPage() {
             alt="Leo Energy"
             className="h-auto w-52 object-contain sm:w-60"
           />
-          
+
           <p className="mt-1 text-sm text-slate-500">
             Вхід до робочого кабінету
           </p>

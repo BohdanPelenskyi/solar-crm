@@ -1,8 +1,6 @@
 import {
   CalendarDays,
-  ClipboardList,
   FolderKanban,
-  LayoutDashboard,
   LogOut,
   UserRound,
 } from 'lucide-react'
@@ -12,19 +10,8 @@ import {
   useNavigate,
 } from 'react-router'
 import { useAuth } from '../auth/AuthContext'
-import { TaskReminderBell } from './TaskReminderBell'
 
 const navItems = [
-  {
-    to: '/dashboard',
-    label: 'Дашборд',
-    icon: LayoutDashboard,
-  },
-  {
-    to: '/tasks',
-    label: 'Завдання',
-    icon: ClipboardList,
-  },
   {
     to: '/calendar',
     label: 'Календар',
@@ -54,25 +41,15 @@ export function AppLayout() {
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-7">
           <NavLink
-            to="/dashboard"
-            aria-label="Leo Energy CRM — дашборд"
+            to="/projects"
+            aria-label="Leo Energy CRM — проєкти"
             className="flex min-w-0 items-center gap-2.5"
           >
             <img
-              src="/leo-energy-mark.png"
-              alt=""
-              className="h-10 w-10 shrink-0 object-contain"
-            />
-
-            <span className="min-w-0 leading-tight">
-              <span className="block truncate text-base font-bold tracking-tight text-slate-900">
-                Leo Energy
-              </span>
-
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-600">
-                CRM
-              </span>
-            </span>
+  src="/leo-energy-logo.png"
+  alt="Leo Energy CRM"
+  className="h-12 w-auto shrink-0 object-contain"
+/>
           </NavLink>
 
           <nav
@@ -86,7 +63,6 @@ export function AppLayout() {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  end={item.to === '/dashboard'}
                   className={({ isActive }) =>
                     `inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition ${
                       isActive
@@ -103,8 +79,6 @@ export function AppLayout() {
           </nav>
 
           <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0">
-            <TaskReminderBell />
-
             <div className="hidden items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 xl:flex">
               <UserRound size={17} />
 
@@ -133,7 +107,7 @@ export function AppLayout() {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 py-2 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden"
         aria-label="Мобільна навігація"
       >
-        <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+        <div className="mx-auto grid max-w-md grid-cols-2 gap-1">
           {navItems.map((item) => {
             const Icon = item.icon
 
@@ -141,7 +115,6 @@ export function AppLayout() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                end={item.to === '/dashboard'}
                 className={({ isActive }) =>
                   `flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-semibold transition ${
                     isActive
