@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { deleteProject } from '../lib/api'
+import { useUndoDelete } from './UndoDeleteProvider'
 
 type DeleteProjectButtonProps = {
   projectId: number
@@ -15,46 +16,48 @@ export function DeleteProjectButton({
   onDeleted,
 }: DeleteProjectButtonProps) {
   const { canManage } = useAuth()
+  const { scheduleUndoDelete } = useUndoDelete()
   const [isDeleting, setIsDeleting] = useState(false)
 
   if (!canManage) {
     return null
   }
 
-  async function handleDelete() {
-    const confirmed = window.confirm(
-      `Видалити проєкт «${projectName}»?\n\nБудуть видалені контакти, фінанси, документи, фото та відео. Цю дію неможливо скасувати.`,
-    )
+  function handleDelete() {
+    setIsDeleting(true)
 
-    if (!confirmed) {
-      return
-    }
+    scheduleUndoDelete({
+      message: `Проєкт «${projectName}» буде видалено`,
+      action: async () => {
+        await deleteProject(projectId)
+      },
+      onCompleted: () => {
+        onDeleted()
+      },
+      onCancel: () => {
+        setIsDeleting(false)
+      },
+      onError: (error) => {
+        setIsDeleting(false)
 
-    try {
-      setIsDeleting(true)
-
-      await deleteProject(projectId)
-      onDeleted()
-    } catch (error) {
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : 'Не вдалося видалити проєкт',
-      )
-    } finally {
-      setIsDeleting(false)
-    }
+        window.alert(
+          error instanceof Error
+            ? error.message
+            : 'Не вдалося видалити проєкт',
+        )
+      },
+    })
   }
 
   return (
     <button
       type="button"
       disabled={isDeleting}
-      onClick={() => void handleDelete()}
+      onClick={handleDelete}
       className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
     >
       <Trash2 size={16} />
-      {isDeleting ? 'Видалення...' : 'Видалити'}
+      {isDeleting ? 'Очікує видалення...' : 'Видалити'}
     </button>
   )
 }

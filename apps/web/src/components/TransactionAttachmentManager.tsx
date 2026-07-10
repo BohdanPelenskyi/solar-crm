@@ -1,6 +1,7 @@
 import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import { Paperclip, Plus, Trash2, Upload } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
+import { useUndoDelete } from './UndoDeleteProvider'
 import {
   addTransactionAttachments,
   deleteTransactionAttachment,
@@ -61,6 +62,7 @@ export function TransactionAttachmentManager({
   onChanged,
 }: TransactionAttachmentManagerProps) {
   const { canManage } = useAuth()
+  const { scheduleUndoDelete } = useUndoDelete()
   const inputRef = useRef<HTMLInputElement>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
@@ -111,28 +113,32 @@ export function TransactionAttachmentManager({
     void uploadFiles(Array.from(event.dataTransfer.files))
   }
 
-  async function handleDelete(attachmentId: number) {
-    const confirmed = window.confirm('Видалити файл з цієї операції?')
+  function handleDelete(attachmentId: number) {
+    setDeletingId(attachmentId)
+    setError('')
 
-    if (!confirmed) {
-      return
-    }
+    scheduleUndoDelete({
+      message: 'Файл транзакції буде видалено',
+      action: async () => {
+        await deleteTransactionAttachment(attachmentId)
+      },
+      onCompleted: async () => {
+        await onChanged()
+        setDeletingId(null)
+      },
+      onCancel: () => {
+        setDeletingId(null)
+      },
+      onError: (requestError) => {
+        setDeletingId(null)
 
-    try {
-      setDeletingId(attachmentId)
-      setError('')
-
-      await deleteTransactionAttachment(attachmentId)
-      await onChanged()
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : 'Не вдалося видалити файл',
-      )
-    } finally {
-      setDeletingId(null)
-    }
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : 'Не вдалося видалити файл',
+        )
+      },
+    })
   }
 
   return (

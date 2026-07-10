@@ -5,6 +5,7 @@ import {
   deleteProjectDocument,
   deleteProjectMedia,
 } from '../lib/api'
+import { useUndoDelete } from './UndoDeleteProvider'
 
 type AttachmentDeleteButtonProps = {
   kind: 'document' | 'media'
@@ -18,6 +19,7 @@ export function AttachmentDeleteButton({
   onDeleted,
 }: AttachmentDeleteButtonProps) {
   const { canManage } = useAuth()
+  const { scheduleUndoDelete } = useUndoDelete()
   const [isDeleting, setIsDeleting] = useState(false)
 
   if (!canManage) {
@@ -26,43 +28,44 @@ export function AttachmentDeleteButton({
 
   const label = kind === 'document' ? 'документ' : 'фото або відео'
 
-  async function handleDelete() {
-    const confirmed = window.confirm(
-      `Видалити ${label}? Цю дію неможливо скасувати.`,
-    )
+  function handleDelete() {
+    setIsDeleting(true)
 
-    if (!confirmed) {
-      return
-    }
+    scheduleUndoDelete({
+      message: `${kind === 'document' ? 'Документ' : 'Файл'} буде видалено`,
+      action: async () => {
+        if (kind === 'document') {
+          await deleteProjectDocument(id)
+        } else {
+          await deleteProjectMedia(id)
+        }
+      },
+      onCompleted: async () => {
+        await onDeleted()
+        setIsDeleting(false)
+      },
+      onCancel: () => {
+        setIsDeleting(false)
+      },
+      onError: (error) => {
+        setIsDeleting(false)
 
-    try {
-      setIsDeleting(true)
-
-      if (kind === 'document') {
-        await deleteProjectDocument(id)
-      } else {
-        await deleteProjectMedia(id)
-      }
-
-      await onDeleted()
-    } catch (error) {
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : 'Не вдалося видалити файл',
-      )
-    } finally {
-      setIsDeleting(false)
-    }
+        window.alert(
+          error instanceof Error
+            ? error.message
+            : `Не вдалося видалити ${label}`,
+        )
+      },
+    })
   }
 
   return (
     <button
       type="button"
       disabled={isDeleting}
-      onClick={() => void handleDelete()}
+      onClick={handleDelete}
       className="shrink-0 rounded-xl p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
-      title="Видалити"
+      title={isDeleting ? 'Очікує видалення' : 'Видалити'}
     >
       <Trash2 size={17} />
     </button>

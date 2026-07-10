@@ -7,6 +7,7 @@ Plus,
 Trash2,
 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
+import { useUndoDelete } from './UndoDeleteProvider'
 import {
 createProjectTask,
 deleteProjectTask,
@@ -83,6 +84,7 @@ tasks,
 onChanged,
 }: ProjectTasksProps) {
 const { canAdd, canManage } = useAuth()
+const { scheduleUndoDelete } = useUndoDelete()
 const [isOpen, setIsOpen] = useState(false)
 const [isSaving, setIsSaving] = useState(false)
 const [updatingTaskId, setUpdatingTaskId] = useState<number | null>(null)
@@ -162,27 +164,31 @@ setUpdatingTaskId(task.id)
 
 }
 
-async function handleDelete(task: ApiProjectTask) {
-const confirmed = window.confirm(`Видалити завдання «${task.title}»?` )
+function handleDelete(task: ApiProjectTask) {
+setDeletingTaskId(task.id)
 
-if (!confirmed) {
-  return
-}
+scheduleUndoDelete({
+  message: `Завдання «${task.title}» буде видалено`,
+  action: async () => {
+    await deleteProjectTask(task.id)
+  },
+  onCompleted: async () => {
+    await onChanged()
+    setDeletingTaskId(null)
+  },
+  onCancel: () => {
+    setDeletingTaskId(null)
+  },
+  onError: (requestError) => {
+    setDeletingTaskId(null)
 
-try {
-  setDeletingTaskId(task.id)
-
-  await deleteProjectTask(task.id)
-  await onChanged()
-} catch (requestError) {
-  window.alert(
-    requestError instanceof Error
-      ? requestError.message
-      : 'Не вдалося видалити завдання',
-  )
-} finally {
-  setDeletingTaskId(null)
-}
+    window.alert(
+      requestError instanceof Error
+        ? requestError.message
+        : 'Не вдалося видалити завдання',
+    )
+  },
+})
 
 }
 

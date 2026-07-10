@@ -19,6 +19,7 @@ type ApiTaskPriority,
 type ApiTaskStatus,
 } from '../lib/api'
 import { EditTaskPanel } from '../components/EditTaskPanel'
+import { useUndoDelete } from '../components/UndoDeleteProvider'
 
 type DeadlineFilter =
 | 'ALL'
@@ -123,6 +124,7 @@ return dueDate > today && dueDate <= nextWeek
 
 export function TasksPage() {
 const { canManage } = useAuth()
+const { scheduleUndoDelete } = useUndoDelete()
 const [tasks, setTasks] = useState<ApiGlobalTask[]>([])
 const [isLoading, setIsLoading] = useState(true)
 const [error, setError] = useState('')
@@ -229,29 +231,31 @@ setUpdatingTaskId(task.id)
 
 }
 
-async function handleDelete(task: ApiGlobalTask) {
-const confirmed = window.confirm(
-`Видалити завдання ${task.title}?`,
-)
+function handleDelete(task: ApiGlobalTask) {
+setDeletingTaskId(task.id)
 
-if (!confirmed) {
-  return
-}
+scheduleUndoDelete({
+  message: `Завдання «${task.title}» буде видалено`,
+  action: async () => {
+    await deleteProjectTask(task.id)
+  },
+  onCompleted: async () => {
+    await loadTasks()
+    setDeletingTaskId(null)
+  },
+  onCancel: () => {
+    setDeletingTaskId(null)
+  },
+  onError: (requestError) => {
+    setDeletingTaskId(null)
 
-try {
-  setDeletingTaskId(task.id)
-
-  await deleteProjectTask(task.id)
-  await loadTasks()
-} catch (requestError) {
-  window.alert(
-    requestError instanceof Error
-      ? requestError.message
-      : 'Не вдалося видалити завдання',
-  )
-} finally {
-  setDeletingTaskId(null)
-}
+    window.alert(
+      requestError instanceof Error
+        ? requestError.message
+        : 'Не вдалося видалити завдання',
+    )
+  },
+})
 
 }
 

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
+import { useUndoDelete } from './UndoDeleteProvider'
 import {
   deleteProjectTransaction,
   updateProjectTransaction,
@@ -71,6 +72,7 @@ export function TransactionActions({
   onChanged,
 }: TransactionActionsProps) {
   const { canManage } = useAuth()
+  const { scheduleUndoDelete } = useUndoDelete()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -138,29 +140,31 @@ export function TransactionActions({
     }
   }
 
-  async function handleDelete() {
-    const confirmed = window.confirm(
-      `Видалити ${operationLabel}? Цю дію неможливо скасувати.`,
-    )
+  function handleDelete() {
+    setIsDeleting(true)
 
-    if (!confirmed) {
-      return
-    }
+    scheduleUndoDelete({
+      message: `Операція (${operationLabel}) буде видалена`,
+      action: async () => {
+        await deleteProjectTransaction(transaction.id)
+      },
+      onCompleted: async () => {
+        await onChanged()
+        setIsDeleting(false)
+      },
+      onCancel: () => {
+        setIsDeleting(false)
+      },
+      onError: (requestError) => {
+        setIsDeleting(false)
 
-    try {
-      setIsDeleting(true)
-
-      await deleteProjectTransaction(transaction.id)
-      await onChanged()
-    } catch (requestError) {
-      window.alert(
-        requestError instanceof Error
-          ? requestError.message
-          : 'Не вдалося видалити операцію',
-      )
-    } finally {
-      setIsDeleting(false)
-    }
+        window.alert(
+          requestError instanceof Error
+            ? requestError.message
+            : 'Не вдалося видалити операцію',
+        )
+      },
+    })
   }
 
   return (

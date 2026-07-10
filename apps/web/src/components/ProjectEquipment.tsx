@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Package, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
+import { useUndoDelete } from './UndoDeleteProvider'
 import {
   createProjectEquipment,
   deleteProjectEquipment,
@@ -45,6 +46,7 @@ export function ProjectEquipment({
   onChanged,
 }: ProjectEquipmentProps) {
   const { canManage } = useAuth()
+  const { scheduleUndoDelete } = useUndoDelete()
   const [isOpen, setIsOpen] = useState(false)
   const [editingEquipment, setEditingEquipment] =
     useState<ApiProjectEquipment | null>(null)
@@ -119,28 +121,31 @@ export function ProjectEquipment({
     }
   }
 
-  async function handleDelete(item: ApiProjectEquipment) {
-    const confirmed = window.confirm(
-      `Видалити обладнання «${item.name}»?`,
-    )
+  function handleDelete(item: ApiProjectEquipment) {
+    setIsDeletingId(item.id)
 
-    if (!confirmed) {
-      return
-    }
+    scheduleUndoDelete({
+      message: `Обладнання «${item.name}» буде видалено`,
+      action: async () => {
+        await deleteProjectEquipment(item.id)
+      },
+      onCompleted: async () => {
+        await onChanged()
+        setIsDeletingId(null)
+      },
+      onCancel: () => {
+        setIsDeletingId(null)
+      },
+      onError: (requestError) => {
+        setIsDeletingId(null)
 
-    try {
-      setIsDeletingId(item.id)
-      await deleteProjectEquipment(item.id)
-      await onChanged()
-    } catch (requestError) {
-      window.alert(
-        requestError instanceof Error
-          ? requestError.message
-          : 'Не вдалося видалити обладнання',
-      )
-    } finally {
-      setIsDeletingId(null)
-    }
+        window.alert(
+          requestError instanceof Error
+            ? requestError.message
+            : 'Не вдалося видалити обладнання',
+        )
+      },
+    })
   }
 
   return (

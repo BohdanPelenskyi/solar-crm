@@ -6,6 +6,7 @@ import {
 import { AuthProvider } from './auth/AuthContext'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AppLayout } from './components/AppLayout'
+import { UndoDeleteProvider } from './components/UndoDeleteProvider'
 import { CalendarPage } from './pages/CalendarPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
@@ -16,6 +17,7 @@ import { TasksPage } from './pages/TasksPage'
 export default function App() {
   return (
     <AuthProvider>
+      <UndoDeleteProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
 
@@ -38,6 +40,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      </UndoDeleteProvider>
     </AuthProvider>
   )
 }
