@@ -8,7 +8,6 @@ import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AppLayout } from './components/AppLayout'
 import { UndoDeleteProvider } from './components/UndoDeleteProvider'
 import { CalendarPage } from './pages/CalendarPage'
-import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProjectDetailsPage } from './pages/ProjectDetailsPage'
 import { ProjectsPage } from './pages/ProjectsPage'
@@ -18,28 +17,34 @@ export default function App() {
   return (
     <AuthProvider>
       <UndoDeleteProvider>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout />}>
-            <Route
-              index
-              element={<Navigate to="/dashboard" replace />}
-            />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="tasks" element={<TasksPage />} />
-            <Route path="calendar" element={<CalendarPage />} />
-            <Route path="projects" element={<ProjectsPage />} />
-            <Route
-              path="projects/:id"
-              element={<ProjectDetailsPage />}
-            />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route
+                index
+                element={<Navigate to="/projects" replace />}
+              />
+
+              <Route
+                path="dashboard"
+                element={<Navigate to="/projects" replace />}
+              />
+
+              <Route path="tasks" element={<TasksPage />} />
+              <Route path="calendar" element={<CalendarPage />} />
+              <Route path="projects" element={<ProjectsPage />} />
+
+              <Route
+                path="projects/:id"
+                element={<ProjectDetailsPage />}
+              />
+            </Route>
           </Route>
-        </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/projects" replace />} />
+        </Routes>
       </UndoDeleteProvider>
     </AuthProvider>
   )
