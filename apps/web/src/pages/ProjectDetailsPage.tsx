@@ -249,29 +249,36 @@ export function ProjectDetailsPage() {
     setProject(refreshedProject)
   }
 
+  const transactions = project?.transactions ?? []
+  const contacts = project?.contacts ?? []
+  const files = project?.files ?? []
+  const media = project?.media ?? []
+  const tasks = project?.tasks ?? []
+  const equipment = project?.equipment ?? []
+
   const incomeTransactions = useMemo(
     () =>
-      project?.transactions.filter(
+      transactions.filter(
         (transaction) => transaction.type === 'INCOME',
-      ) ?? [],
-    [project],
+      ),
+    [transactions],
   )
 
   const expenseTransactions = useMemo(
     () =>
-      project?.transactions.filter(
+      transactions.filter(
         (transaction) => transaction.type === 'EXPENSE',
-      ) ?? [],
-    [project],
+      ),
+    [transactions],
   )
 
   const regularFiles = useMemo(
-  () =>
-    project?.files.filter(
-      (file) => file.category !== 'PROPOSAL',
-    ) ?? [],
-  [project],
-)
+    () =>
+      files.filter(
+        (file) => file.category !== 'PROPOSAL',
+      ),
+    [files],
+  )
 
   if (isLoading) {
     return (
@@ -509,12 +516,12 @@ export function ProjectDetailsPage() {
               </div>
 
               <div className="mt-5 space-y-3 sm:hidden">
-                {project.contacts.length === 0 ? (
+                {contacts.length === 0 ? (
                   <div className="rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
                     Контакти ще не додані.
                   </div>
                 ) : (
-                  project.contacts.map((contact) => (
+                  contacts.map((contact) => (
                     <article
                       key={contact.id}
                       className="rounded-2xl border border-slate-100 p-4"
@@ -578,7 +585,7 @@ export function ProjectDetailsPage() {
                   </thead>
 
                   <tbody>
-                    {project.contacts.length === 0 ? (
+                    {contacts.length === 0 ? (
                       <tr>
                         <td
                           colSpan={5}
@@ -588,7 +595,7 @@ export function ProjectDetailsPage() {
                         </td>
                       </tr>
                     ) : (
-                      project.contacts.map((contact) => (
+                      contacts.map((contact) => (
                         <tr
                           key={contact.id}
                           className="border-b border-slate-100 last:border-0"
@@ -638,13 +645,13 @@ export function ProjectDetailsPage() {
 
             <ProjectTasks
               projectId={project.id}
-              tasks={project.tasks}
+              tasks={tasks}
               onChanged={refreshProject}
             />
 
             <ProjectEquipment
               projectId={project.id}
-              equipment={project.equipment}
+              equipment={equipment}
               onChanged={refreshProject}
             />
 
@@ -666,7 +673,7 @@ export function ProjectDetailsPage() {
                 />
               </div>
 
-              {project.media.length === 0 ? (
+              {media.length === 0 ? (
                 <div className="mt-5 rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center">
                   <Upload
                     size={24}
@@ -679,7 +686,7 @@ export function ProjectDetailsPage() {
                 </div>
               ) : (
                 <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {project.media.map((media) => {
+                  {media.map((media) => {
                     const mediaUrl = getUploadUrl(media.storageKey)
 
                     return (
@@ -748,7 +755,7 @@ export function ProjectDetailsPage() {
           <aside className="min-w-0 space-y-5">
             <ProjectProposal
             projectId={project.id}
-            files={project.files}
+            files={files}
             onChanged={refreshProject}
             />
 
