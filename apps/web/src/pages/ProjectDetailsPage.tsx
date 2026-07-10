@@ -92,6 +92,29 @@ function formatMoney(value: string | number) {
   }).format(Number.isFinite(amount) ? amount : 0)
 }
 
+
+function getPhoneHref(phone: string) {
+  const cleaned = phone.replace(/[^+\d]/g, '')
+
+  if (!cleaned) {
+    return '#'
+  }
+
+  if (cleaned.startsWith('+')) {
+    return `tel:${cleaned}`
+  }
+
+  if (cleaned.startsWith('380')) {
+    return `tel:+${cleaned}`
+  }
+
+  if (cleaned.startsWith('0')) {
+    return `tel:+38${cleaned}`
+  }
+
+  return `tel:${cleaned}`
+}
+
 function FinanceBlock({
   title,
   type,
@@ -533,8 +556,8 @@ export function ProjectDetailsPage() {
                           </p>
 
                           <a
-                            href={`tel:${contact.phone}`}
-                            className="mt-1 inline-flex items-center gap-2 text-sm text-blue-700"
+                            href={getPhoneHref(contact.phone)}
+                            className="mt-2 inline-flex max-w-full items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition active:bg-blue-100"
                           >
                             <Phone size={16} />
                             {contact.phone}
@@ -601,13 +624,16 @@ export function ProjectDetailsPage() {
                           className="border-b border-slate-100 last:border-0"
                         >
                           <td className="py-4">
-                            <span className="inline-flex items-center gap-2 text-slate-700">
+                            <a
+                              href={getPhoneHref(contact.phone)}
+                              className="inline-flex items-center gap-2 font-semibold text-blue-700 transition hover:text-blue-800"
+                            >
                               <Phone
                                 size={16}
                                 className="text-blue-600"
                               />
                               {contact.phone}
-                            </span>
+                            </a>
                           </td>
 
                           <td className="py-4 font-semibold text-slate-800">

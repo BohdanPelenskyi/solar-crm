@@ -19,6 +19,7 @@ import { mkdirSync } from 'node:fs'
 import { unlink } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { diskStorage } from 'multer'
+import { TransactionAttachmentType } from '../generated/prisma/client'
 import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
 import { TransactionsService } from './transactions.service'
@@ -42,6 +43,11 @@ const allowedAttachmentMimeTypes = new Set([
   'image/webp',
 ])
 
+const allowedAttachmentTypes = new Set<string>([
+  TransactionAttachmentType.INVOICE,
+  TransactionAttachmentType.EXPENSE_DOC,
+])
+
 const transactionAttachmentUploadOptions = {
   storage: diskStorage({
     destination: (_request, _file, callback) => {
@@ -56,7 +62,6 @@ const transactionAttachmentUploadOptions = {
   }),
   limits: {
     fileSize: 15 * 1024 * 1024,
-    files: 2,
   },
 }
 
@@ -65,11 +70,6 @@ async function cleanupUploadedFiles(files: Express.Multer.File[]) {
 }
 
 async function validateAttachments(attachments: Express.Multer.File[]) {
-  if (attachments.length > 2) {
-    await cleanupUploadedFiles(attachments)
-    throw new BadRequestException('До однієї операції можна додати максимум 2 файли')
-  }
-
   const invalidFile = attachments.find(
     (file) => !allowedAttachmentMimeTypes.has(file.mimetype),
   )
@@ -82,13 +82,63 @@ async function validateAttachments(attachments: Express.Multer.File[]) {
   }
 }
 
+function normalizeAttachmentType(value: unknown) {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+
+  if (!allowedAttachmentTypes.has(value)) {
+    return undefined
+  }
+
+  return value as TransactionAttachmentType
+}
+
+function normalizeAttachmentTypes(
+  value: unknown,
+  filesCount: number,
+): TransactionAttachmentType[] {
+  if (filesCount === 0) {
+    return []
+  }
+
+  const rawValues = Array.isArray(value)
+    ? value
+    : value === undefined
+      ? []
+      : [value]
+
+  if (rawValues.length === 0) {
+    return Array.from(
+      { length: filesCount },
+      () => TransactionAttachmentType.INVOICE,
+    )
+  }
+
+  if (rawValues.length !== filesCount) {
+    throw new BadRequestException(
+      'Кількість типів файлів не збігається з кількістю файлів',
+    )
+  }
+
+  return rawValues.map((rawValue) => {
+    const attachmentType = normalizeAttachmentType(rawValue)
+
+    if (!attachmentType) {
+      throw new BadRequestException('Некоректний тип фінансового документа')
+    }
+
+    return attachmentType
+  })
+}
+
 @Controller()
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Post('projects/:projectId/transactions')
   @UseInterceptors(
-    FilesInterceptor('attachments', 2, transactionAttachmentUploadOptions),
+    FilesInterceptor('attachments', undefined, transactionAttachmentUploadOptions),
   )
   async create(
     @Param('projectId', ParseIntPipe) projectId: number,
@@ -97,10 +147,16 @@ export class TransactionsController {
   ) {
     await validateAttachments(attachments)
 
+    const attachmentTypes = normalizeAttachmentTypes(
+      createTransactionDto.attachmentTypes,
+      attachments.length,
+    )
+
     return this.transactionsService.create(
       projectId,
       createTransactionDto,
       attachments,
+      attachmentTypes,
     )
   }
 
@@ -119,15 +175,27 @@ export class TransactionsController {
 
   @Post('transactions/:id/attachments')
   @UseInterceptors(
-    FilesInterceptor('attachments', 2, transactionAttachmentUploadOptions),
+    FilesInterceptor('attachments', undefined, transactionAttachmentUploadOptions),
   )
   async addAttachments(
     @Param('id', ParseIntPipe) id: number,
+    @Body('attachmentType') attachmentTypeValue: string | undefined,
     @UploadedFiles() attachments: Express.Multer.File[] = [],
   ) {
     await validateAttachments(attachments)
 
-    return this.transactionsService.addAttachments(id, attachments)
+    const attachmentType = normalizeAttachmentType(attachmentTypeValue)
+
+    if (!attachmentType) {
+      await cleanupUploadedFiles(attachments)
+      throw new BadRequestException('Некоректний тип фінансового документа')
+    }
+
+    return this.transactionsService.addAttachments(
+      id,
+      attachments,
+      attachmentType,
+    )
   }
 
   @Delete('transaction-attachments/:id')

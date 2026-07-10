@@ -37,6 +37,11 @@ enum PaymentMethod {
   OTHER
 }
 
+enum TransactionAttachmentType {
+  INVOICE
+  EXPENSE_DOC
+}
+
 enum FileCategory {
   PROPOSAL
   PROJECT_DOCUMENT
@@ -138,6 +143,7 @@ model FinancialTransaction {
 model TransactionAttachment {
   id            Int      @id @default(autoincrement())
   transactionId Int
+  type           TransactionAttachmentType @default(INVOICE)
   originalName   String
   storageKey     String
   mimeType       String
@@ -147,6 +153,7 @@ model TransactionAttachment {
   transaction FinancialTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
   @@index([transactionId])
+  @@index([transactionId, type])
 }
 
 model ProjectEquipment {

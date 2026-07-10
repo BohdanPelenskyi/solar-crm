@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { MapPin, Search, UserRound } from 'lucide-react'
+import { MapPin, Phone, Search, UserRound } from 'lucide-react'
 import {
   getProjects,
   type ApiProject,
@@ -52,6 +52,29 @@ function getResponsible(project: ApiProject) {
   return [project.responsiblePrimary, project.responsibleSecondary]
     .filter(Boolean)
     .join(', ')
+}
+
+
+function getPhoneHref(phone: string) {
+  const cleaned = phone.replace(/[^+\d]/g, '')
+
+  if (!cleaned) {
+    return '#'
+  }
+
+  if (cleaned.startsWith('+')) {
+    return `tel:${cleaned}`
+  }
+
+  if (cleaned.startsWith('380')) {
+    return `tel:+${cleaned}`
+  }
+
+  if (cleaned.startsWith('0')) {
+    return `tel:+38${cleaned}`
+  }
+
+  return `tel:${cleaned}`
 }
 
 function getUniqueOptions(values: Array<string | null | undefined>) {
@@ -331,11 +354,25 @@ export function ProjectsPage() {
                           </span>
                         </p>
 
-                        <p className="text-slate-600">
-                          {primaryContact
-                            ? `${primaryContact.fullName} · ${primaryContact.phone}`
-                            : 'Контакт не вказано'}
-                        </p>
+                        {primaryContact ? (
+                          <div className="min-w-0 rounded-xl bg-slate-50 px-3 py-2">
+                            <p className="break-words text-sm font-medium text-slate-700">
+                              {primaryContact.fullName}
+                            </p>
+
+                            <a
+                              href={getPhoneHref(primaryContact.phone)}
+                              className="mt-1 inline-flex max-w-full items-center gap-2 rounded-lg text-sm font-semibold text-blue-700 transition active:text-blue-900"
+                            >
+                              <Phone size={15} className="shrink-0" />
+                              <span className="break-all">
+                                {primaryContact.phone}
+                              </span>
+                            </a>
+                          </div>
+                        ) : (
+                          <p className="text-slate-600">Контакт не вказано</p>
+                        )}
                       </div>
 
                       <div className="mt-4 grid grid-cols-2 gap-3 border-y border-slate-100 py-3">
@@ -436,9 +473,13 @@ export function ProjectsPage() {
                                   {primaryContact.fullName}
                                 </p>
 
-                                <p className="mt-0.5 text-xs text-slate-500">
+                                <a
+                                  href={getPhoneHref(primaryContact.phone)}
+                                  className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-800"
+                                >
+                                  <Phone size={13} className="shrink-0" />
                                   {primaryContact.phone}
-                                </p>
+                                </a>
                               </>
                             ) : (
                               <p className="text-slate-400">Не вказано</p>

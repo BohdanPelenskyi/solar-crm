@@ -40,4 +40,7 @@ export class CreateTransactionDto {
   @IsString()
   @MaxLength(1000)
   comment?: string;
+
+  @IsOptional()
+  attachmentTypes?: string | string[];
 }

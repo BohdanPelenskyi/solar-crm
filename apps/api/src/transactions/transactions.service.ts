@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { Buffer } from 'node:buffer'
 import { unlink } from 'node:fs/promises'
 import { join } from 'node:path'
-import { PaymentMethod } from '../generated/prisma/client'
+import { PaymentMethod, TransactionAttachmentType } from '../generated/prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 import { CreateTransactionDto } from './dto/create-transaction.dto'
 import { UpdateTransactionDto } from './dto/update-transaction.dto'
@@ -124,9 +124,10 @@ export class TransactionsService {
       where: { id },
       include: {
         attachments: {
-          orderBy: {
-            createdAt: 'asc',
-          },
+          orderBy: [
+            { type: 'asc' },
+            { createdAt: 'asc' },
+          ],
         },
       },
     })
@@ -138,8 +139,12 @@ export class TransactionsService {
     return transaction
   }
 
-  private mapAttachment(file: Express.Multer.File) {
+  private mapAttachment(
+    file: Express.Multer.File,
+    type: TransactionAttachmentType,
+  ) {
     return {
+      type,
       originalName: normalizeFileName(file.originalname),
       storageKey: `transactions/${file.filename}`,
       mimeType: file.mimetype,
@@ -151,6 +156,7 @@ export class TransactionsService {
     projectId: number,
     createTransactionDto: CreateTransactionDto,
     attachments: Express.Multer.File[] = [],
+    attachmentTypes: TransactionAttachmentType[] = [],
   ) {
     await this.ensureProjectExists(projectId)
 
@@ -169,15 +175,21 @@ export class TransactionsService {
           attachments:
             attachments.length > 0
               ? {
-                  create: attachments.map((file) => this.mapAttachment(file)),
+                  create: attachments.map((file, index) =>
+                    this.mapAttachment(
+                      file,
+                      attachmentTypes[index] ?? TransactionAttachmentType.INVOICE,
+                    ),
+                  ),
                 }
               : undefined,
         },
         include: {
           attachments: {
-            orderBy: {
-              createdAt: 'asc',
-            },
+            orderBy: [
+              { type: 'asc' },
+              { createdAt: 'asc' },
+            ],
           },
         },
       })
@@ -193,6 +205,7 @@ export class TransactionsService {
   async addAttachments(
     transactionId: number,
     attachments: Express.Multer.File[] = [],
+    attachmentType: TransactionAttachmentType,
   ) {
     const transaction = await this.findTransactionOrThrow(transactionId)
 
@@ -200,31 +213,22 @@ export class TransactionsService {
       return transaction
     }
 
-    const existingCount = transaction.attachments.length
-
-    if (existingCount + attachments.length > 2) {
-      await Promise.all(
-        attachments.map((file) => unlink(file.path).catch(() => undefined)),
-      )
-
-      throw new BadRequestException(
-        `До однієї операції можна додати максимум 2 файли. Зараз вже є ${existingCount}.`,
-      )
-    }
-
     try {
       return await this.prisma.financialTransaction.update({
         where: { id: transactionId },
         data: {
           attachments: {
-            create: attachments.map((file) => this.mapAttachment(file)),
+            create: attachments.map((file) =>
+              this.mapAttachment(file, attachmentType),
+            ),
           },
         },
         include: {
           attachments: {
-            orderBy: {
-              createdAt: 'asc',
-            },
+            orderBy: [
+              { type: 'asc' },
+              { createdAt: 'asc' },
+            ],
           },
         },
       })
@@ -247,9 +251,10 @@ export class TransactionsService {
       },
       include: {
         attachments: {
-          orderBy: {
-            createdAt: 'asc',
-          },
+          orderBy: [
+            { type: 'asc' },
+            { createdAt: 'asc' },
+          ],
         },
       },
     })
@@ -273,9 +278,10 @@ export class TransactionsService {
       },
       include: {
         attachments: {
-          orderBy: {
-            createdAt: 'asc',
-          },
+          orderBy: [
+            { type: 'asc' },
+            { createdAt: 'asc' },
+          ],
         },
       },
     })

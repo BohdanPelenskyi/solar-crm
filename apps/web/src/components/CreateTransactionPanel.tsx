@@ -1,9 +1,11 @@
 import { useRef, useState, type DragEvent, type FormEvent } from 'react'
-import { Paperclip, Plus, Upload } from 'lucide-react'
+import { Paperclip, Plus, Trash2, Upload } from 'lucide-react'
 import {
   createProjectTransaction,
   type ApiPaymentMethod,
+  type ApiTransactionAttachmentType,
   type ApiTransactionType,
+  type CreateTransactionAttachmentInput,
 } from '../lib/api'
 
 type CreateTransactionPanelProps = {
@@ -44,6 +46,11 @@ const allowedAttachmentTypes = new Set([
   'image/webp',
 ])
 
+const attachmentTypeLabels: Record<ApiTransactionAttachmentType, string> = {
+  INVOICE: 'Рахунок',
+  EXPENSE_DOC: 'Видаткова',
+}
+
 function getLocalDateTimeValue() {
   const now = new Date()
   const localDate = new Date(
@@ -61,16 +68,44 @@ function formatFileSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} МБ`
 }
 
+function getFilesError(files: File[]) {
+  if (files.length === 0) {
+    return 'Обери файл'
+  }
+
+  const tooLargeFile = files.find(
+    (file) => file.size > 15 * 1024 * 1024,
+  )
+
+  if (tooLargeFile) {
+    return 'Максимальний розмір одного файлу — 15 МБ'
+  }
+
+  const invalidFile = files.find(
+    (file) => !allowedAttachmentTypes.has(file.type),
+  )
+
+  if (invalidFile) {
+    return 'Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG та WEBP'
+  }
+
+  return ''
+}
+
 export function CreateTransactionPanel({
   projectId,
   type,
   onCreated,
 }: CreateTransactionPanelProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const invoiceInputRef = useRef<HTMLInputElement>(null)
+  const expenseDocInputRef = useRef<HTMLInputElement>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
-  const [attachments, setAttachments] = useState<File[]>([])
+  const [draggingType, setDraggingType] =
+    useState<ApiTransactionAttachmentType | null>(null)
+  const [attachments, setAttachments] =
+    useState<CreateTransactionAttachmentInput[]>([])
 
   const isIncome = type === 'INCOME'
   const operationLabel = isIncome ? 'прихід' : 'витрату'
@@ -95,9 +130,14 @@ export function CreateTransactionPanel({
     })
     setAttachments([])
     setError('')
+    setDraggingType(null)
 
-    if (inputRef.current) {
-      inputRef.current.value = ''
+    if (invoiceInputRef.current) {
+      invoiceInputRef.current.value = ''
+    }
+
+    if (expenseDocInputRef.current) {
+      expenseDocInputRef.current.value = ''
     }
   }
 
@@ -110,39 +150,38 @@ export function CreateTransactionPanel({
     setIsOpen(false)
   }
 
-  function selectAttachments(files: File[]) {
-    const limitedFiles = files.slice(0, 2)
+  function selectAttachments(
+    files: File[],
+    attachmentType: ApiTransactionAttachmentType,
+  ) {
+    const validationError = getFilesError(files)
 
-    if (files.length > 2) {
-      setError('До однієї операції можна додати максимум 2 файли')
+    if (validationError) {
+      setError(validationError)
       return
     }
 
-    const tooLargeFile = limitedFiles.find(
-      (file) => file.size > 15 * 1024 * 1024,
-    )
-
-    if (tooLargeFile) {
-      setError('Максимальний розмір одного файлу — 15 МБ')
-      return
-    }
-
-    const invalidFile = limitedFiles.find(
-      (file) => !allowedAttachmentTypes.has(file.type),
-    )
-
-    if (invalidFile) {
-      setError('Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG та WEBP')
-      return
-    }
-
-    setAttachments(limitedFiles)
+    setAttachments((current) => [
+      ...current,
+      ...files.map((file) => ({
+        type: attachmentType,
+        file,
+      })),
+    ])
     setError('')
   }
 
-  function handleDrop(event: DragEvent<HTMLDivElement>) {
+  function removeSelectedAttachment(index: number) {
+    setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))
+  }
+
+  function handleDrop(
+    event: DragEvent<HTMLDivElement>,
+    attachmentType: ApiTransactionAttachmentType,
+  ) {
     event.preventDefault()
-    selectAttachments(Array.from(event.dataTransfer.files))
+    setDraggingType(null)
+    selectAttachments(Array.from(event.dataTransfer.files), attachmentType)
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -185,6 +224,98 @@ export function CreateTransactionPanel({
     } finally {
       setIsSaving(false)
     }
+  }
+
+  function renderUploadZone(attachmentType: ApiTransactionAttachmentType) {
+    const inputRef =
+      attachmentType === 'INVOICE' ? invoiceInputRef : expenseDocInputRef
+    const label = attachmentTypeLabels[attachmentType]
+    const selectedFiles = attachments
+      .map((attachment, index) => ({ ...attachment, index }))
+      .filter((attachment) => attachment.type === attachmentType)
+
+    return (
+      <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-bold text-slate-800">
+              {label}
+            </p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Можна додати один або декілька файлів
+            </p>
+          </div>
+        </div>
+
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(event) => {
+            event.preventDefault()
+            setDraggingType(attachmentType)
+          }}
+          onDragLeave={() => setDraggingType(null)}
+          onDrop={(event) => handleDrop(event, attachmentType)}
+          className={`mt-3 cursor-pointer rounded-2xl border-2 border-dashed px-4 py-5 text-center transition ${
+            draggingType === attachmentType
+              ? 'border-blue-300 bg-blue-50'
+              : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50'
+          }`}
+        >
+          <Upload size={22} className="mx-auto text-blue-600" />
+          <p className="mt-2 text-sm font-semibold text-slate-700">
+            Перетягни файл сюди або натисни для вибору
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            PDF, Word, Excel або зображення до 15 МБ
+          </p>
+        </div>
+
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp"
+          onChange={(event) => {
+            selectAttachments(
+              Array.from(event.target.files ?? []),
+              attachmentType,
+            )
+
+            event.target.value = ''
+          }}
+          className="hidden"
+        />
+
+        {selectedFiles.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {selectedFiles.map((attachment) => (
+              <div
+                key={`${attachment.file.name}-${attachment.file.size}-${attachment.index}`}
+                className="flex min-w-0 items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm text-slate-700"
+              >
+                <Paperclip size={15} className="shrink-0 text-blue-600" />
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {attachment.file.name}
+                </span>
+                <span className="shrink-0 text-xs text-slate-500">
+                  {formatFileSize(attachment.file.size)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeSelectedAttachment(attachment.index)}
+                  className="shrink-0 rounded p-1 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                  title="Прибрати файл"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -345,57 +476,13 @@ export function CreateTransactionPanel({
                 />
               </label>
 
-              <div>
+              <div className="space-y-3">
                 <span className="text-sm font-semibold text-slate-700">
-                  Файли до операції, максимум 2 шт
+                  Документи до операції
                 </span>
 
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => inputRef.current?.click()}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={handleDrop}
-                  className="mt-1.5 cursor-pointer rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center transition hover:border-blue-300 hover:bg-blue-50"
-                >
-                  <Upload size={22} className="mx-auto text-blue-600" />
-                  <p className="mt-2 text-sm font-semibold text-slate-700">
-                    Перетягни файли сюди або натисни для вибору
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    PDF, Word, Excel або зображення до 15 МБ
-                  </p>
-                </div>
-
-                <input
-                  ref={inputRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp"
-                  onChange={(event) =>
-                    selectAttachments(Array.from(event.target.files ?? []))
-                  }
-                  className="hidden"
-                />
-
-                {attachments.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {attachments.map((file) => (
-                      <div
-                        key={`${file.name}-${file.size}`}
-                        className="flex min-w-0 items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700"
-                      >
-                        <Paperclip size={15} className="shrink-0 text-blue-600" />
-                        <span className="min-w-0 flex-1 truncate font-medium">
-                          {file.name}
-                        </span>
-                        <span className="shrink-0 text-xs text-slate-500">
-                          {formatFileSize(file.size)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {renderUploadZone('INVOICE')}
+                {renderUploadZone('EXPENSE_DOC')}
               </div>
 
               {error && (

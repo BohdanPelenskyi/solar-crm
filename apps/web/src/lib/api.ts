@@ -130,6 +130,8 @@ export type ApiContactRole =
 
 export type ApiTransactionType = 'INCOME' | 'EXPENSE'
 
+export type ApiTransactionAttachmentType = 'INVOICE' | 'EXPENSE_DOC'
+
 export type ApiFileCategory =
   | 'PROPOSAL'
   | 'PROJECT_DOCUMENT'
@@ -163,6 +165,7 @@ export type ApiPaymentMethod =
 export type ApiTransactionAttachment = {
   id: number
   transactionId: number
+  type: ApiTransactionAttachmentType
   originalName: string
   storageKey: string
   mimeType: string
@@ -376,10 +379,15 @@ export type CreateProjectTransactionPayload = {
   comment?: string
 }
 
+export type CreateTransactionAttachmentInput = {
+  type: ApiTransactionAttachmentType
+  file: File
+}
+
 export async function createProjectTransaction(
   projectId: number,
   payload: CreateProjectTransactionPayload,
-  attachments: File[] = [],
+  attachments: CreateTransactionAttachmentInput[] = [],
 ): Promise<ApiFinancialTransaction> {
   const formData = new FormData()
 
@@ -400,8 +408,9 @@ export async function createProjectTransaction(
     formData.append('comment', payload.comment)
   }
 
-  attachments.slice(0, 2).forEach((file) => {
-    formData.append('attachments', file)
+  attachments.forEach((attachment) => {
+    formData.append('attachments', attachment.file)
+    formData.append('attachmentTypes', attachment.type)
   })
 
   const response = await apiFetch(
@@ -460,11 +469,14 @@ export async function deleteProjectTransaction(
 
 export async function addTransactionAttachments(
   transactionId: number,
+  attachmentType: ApiTransactionAttachmentType,
   attachments: File[],
 ): Promise<ApiFinancialTransaction> {
   const formData = new FormData()
 
-  attachments.slice(0, 2).forEach((file) => {
+  formData.append('attachmentType', attachmentType)
+
+  attachments.forEach((file) => {
     formData.append('attachments', file)
   })
 
