@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { ArrowDownUp, MapPin, Search, UserRound } from 'lucide-react'
+import { MapPin, Search, UserRound } from 'lucide-react'
 import {
   getProjects,
   type ApiProject,
@@ -9,20 +9,6 @@ import {
 import { CreateProjectPanel } from '../components/CreateProjectPanel'
 
 type StatusFilter = 'ALL' | ApiProjectStatus
-
-type FinancialFilter =
-  | 'ALL'
-  | 'PROFITABLE'
-  | 'LOSS'
-  | 'NO_TRANSACTIONS'
-
-type ProjectSort =
-  | 'UPDATED_DESC'
-  | 'NAME_ASC'
-  | 'INCOME_DESC'
-  | 'EXPENSES_DESC'
-  | 'MARGIN_DESC'
-  | 'MARGIN_ASC'
 
 const statusInfo: Record<
   ApiProjectStatus,
@@ -62,15 +48,29 @@ function formatMoney(amount: number) {
   }).format(amount)
 }
 
+function getResponsible(project: ApiProject) {
+  return [project.responsiblePrimary, project.responsibleSecondary]
+    .filter(Boolean)
+    .join(', ')
+}
+
+function getUniqueOptions(values: Array<string | null | undefined>) {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => value?.trim())
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ).sort((first, second) => first.localeCompare(second, 'uk'))
+}
+
 export function ProjectsPage() {
   const [projects, setProjects] = useState<ApiProject[]>([])
   const [search, setSearch] = useState('')
   const [selectedStatus, setSelectedStatus] =
     useState<StatusFilter>('ALL')
-  const [selectedFinancialFilter, setSelectedFinancialFilter] =
-    useState<FinancialFilter>('ALL')
-  const [selectedSort, setSelectedSort] =
-    useState<ProjectSort>('UPDATED_DESC')
+  const [selectedSource, setSelectedSource] = useState('ALL')
+  const [selectedResponsible, setSelectedResponsible] = useState('ALL')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -94,12 +94,28 @@ export function ProjectsPage() {
     void loadProjects()
   }, [])
 
+  const sourceOptions = useMemo(
+    () => getUniqueOptions(projects.map((project) => project.source)),
+    [projects],
+  )
+
+  const responsibleOptions = useMemo(
+    () =>
+      getUniqueOptions(
+        projects.flatMap((project) => [
+          project.responsiblePrimary,
+          project.responsibleSecondary,
+        ]),
+      ),
+    [projects],
+  )
+
   const filteredProjects = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase()
 
-    const result = projects.filter((project) => {
+    return projects.filter((project) => {
       const primaryContact = project.contacts[0]
-      const summary = project.financialSummary
+      const responsible = getResponsible(project)
 
       const matchesSearch =
         !normalizedSearch ||
@@ -108,79 +124,41 @@ export function ProjectsPage() {
           .toLowerCase()
           .includes(normalizedSearch) ||
         primaryContact?.phone.includes(normalizedSearch) ||
-        project.location?.toLowerCase().includes(normalizedSearch)
+        project.location?.toLowerCase().includes(normalizedSearch) ||
+        project.source?.toLowerCase().includes(normalizedSearch) ||
+        responsible.toLowerCase().includes(normalizedSearch)
 
       const matchesStatus =
         selectedStatus === 'ALL' || project.status === selectedStatus
 
-      const matchesFinancialFilter =
-        selectedFinancialFilter === 'ALL' ||
-        (selectedFinancialFilter === 'PROFITABLE' &&
-          summary.transactionsCount > 0 &&
-          summary.margin > 0) ||
-        (selectedFinancialFilter === 'LOSS' &&
-          summary.transactionsCount > 0 &&
-          summary.margin < 0) ||
-        (selectedFinancialFilter === 'NO_TRANSACTIONS' &&
-          summary.transactionsCount === 0)
+      const matchesSource =
+        selectedSource === 'ALL' || project.source === selectedSource
+
+      const matchesResponsible =
+        selectedResponsible === 'ALL' ||
+        project.responsiblePrimary === selectedResponsible ||
+        project.responsibleSecondary === selectedResponsible
 
       return (
         matchesSearch &&
         matchesStatus &&
-        matchesFinancialFilter
+        matchesSource &&
+        matchesResponsible
       )
-    })
-
-    return [...result].sort((first, second) => {
-      switch (selectedSort) {
-        case 'NAME_ASC':
-          return first.name.localeCompare(second.name, 'uk')
-
-        case 'INCOME_DESC':
-          return (
-            second.financialSummary.income -
-            first.financialSummary.income
-          )
-
-        case 'EXPENSES_DESC':
-          return (
-            second.financialSummary.expenses -
-            first.financialSummary.expenses
-          )
-
-        case 'MARGIN_DESC':
-          return (
-            second.financialSummary.margin -
-            first.financialSummary.margin
-          )
-
-        case 'MARGIN_ASC':
-          return (
-            first.financialSummary.margin -
-            second.financialSummary.margin
-          )
-
-        case 'UPDATED_DESC':
-        default:
-          return (
-            new Date(second.updatedAt).getTime() -
-            new Date(first.updatedAt).getTime()
-          )
-      }
     })
   }, [
     projects,
     search,
-    selectedFinancialFilter,
-    selectedSort,
+    selectedResponsible,
+    selectedSource,
     selectedStatus,
   ])
 
   function clearFilters() {
     setSearch('')
     setSelectedStatus('ALL')
-    setSelectedFinancialFilter('ALL')
-    setSelectedSort('UPDATED_DESC')
+    setSelectedSource('ALL')
+    setSelectedResponsible('ALL')
   }
 
   return (
@@ -208,7 +186,7 @@ export function ProjectsPage() {
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Фінанси та статуси по всіх об’єктах
+                Статуси, джерела, відповідальні та фінанси по обʼєктах
               </p>
             </div>
 
@@ -217,14 +195,14 @@ export function ProjectsPage() {
             </span>
           </div>
 
-          <div className="mt-5 grid gap-3 lg:grid-cols-4">
-            <label className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 lg:col-span-2">
+          <div className="mt-5 grid gap-3 xl:grid-cols-[1.7fr_1fr_1fr_1fr_auto]">
+            <label className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
               <Search size={19} className="shrink-0 text-slate-400" />
 
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Проєкт, контакт або локація..."
+                placeholder="Проєкт, контакт, локація, джерело..."
                 className="min-h-6 w-full bg-transparent text-base text-slate-900 outline-none placeholder:text-slate-400 sm:text-sm"
               />
             </label>
@@ -246,53 +224,39 @@ export function ProjectsPage() {
             </select>
 
             <select
-              value={selectedFinancialFilter}
+              value={selectedSource}
+              onChange={(event) => setSelectedSource(event.target.value)}
+              className="min-h-12 rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-700 outline-none focus:border-blue-500 sm:text-sm"
+            >
+              <option value="ALL">Усі джерела</option>
+              {sourceOptions.map((source) => (
+                <option key={source} value={source}>
+                  {source}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedResponsible}
               onChange={(event) =>
-                setSelectedFinancialFilter(
-                  event.target.value as FinancialFilter,
-                )
+                setSelectedResponsible(event.target.value)
               }
               className="min-h-12 rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-700 outline-none focus:border-blue-500 sm:text-sm"
             >
-              <option value="ALL">Усі фінансові результати</option>
-              <option value="PROFITABLE">Прибуткові</option>
-              <option value="LOSS">Зі збитком</option>
-              <option value="NO_TRANSACTIONS">
-                Без фінансових операцій
-              </option>
+              <option value="ALL">Усі відповідальні</option>
+              {responsibleOptions.map((responsible) => (
+                <option key={responsible} value={responsible}>
+                  {responsible}
+                </option>
+              ))}
             </select>
-          </div>
-
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-            <label className="flex min-h-12 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
-              <ArrowDownUp size={18} className="shrink-0 text-slate-400" />
-
-              <select
-                value={selectedSort}
-                onChange={(event) =>
-                  setSelectedSort(event.target.value as ProjectSort)
-                }
-                className="w-full bg-transparent text-base font-medium text-slate-700 outline-none sm:text-sm"
-              >
-                <option value="UPDATED_DESC">
-                  Спочатку оновлені нещодавно
-                </option>
-                <option value="NAME_ASC">За назвою А–Я</option>
-                <option value="INCOME_DESC">За приходом: найбільший</option>
-                <option value="EXPENSES_DESC">
-                  За витратами: найбільші
-                </option>
-                <option value="MARGIN_DESC">За маржею: найбільша</option>
-                <option value="MARGIN_ASC">За маржею: найменша</option>
-              </select>
-            </label>
 
             <button
               type="button"
               onClick={clearFilters}
               className="min-h-12 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              Очистити фільтри
+              Очистити
             </button>
           </div>
 
@@ -323,6 +287,7 @@ export function ProjectsPage() {
                   const primaryContact = project.contacts[0]
                   const status = statusInfo[project.status]
                   const summary = project.financialSummary
+                  const responsible = getResponsible(project)
 
                   return (
                     <article
@@ -336,9 +301,7 @@ export function ProjectsPage() {
                           </h3>
 
                           <p className="mt-1 text-xs text-slate-500">
-                            {summary.transactionsCount === 0
-                              ? 'Фінансових операцій немає'
-                              : `Операцій: ${summary.transactionsCount}`}
+                            {project.source || 'Джерело не вказано'}
                           </p>
                         </div>
 
@@ -364,10 +327,14 @@ export function ProjectsPage() {
                             className="mt-0.5 shrink-0 text-blue-600"
                           />
                           <span>
-                            {primaryContact
-                              ? `${primaryContact.fullName} · ${primaryContact.phone}`
-                              : 'Контакт не вказано'}
+                            {responsible || 'Відповідального не вказано'}
                           </span>
+                        </p>
+
+                        <p className="text-slate-600">
+                          {primaryContact
+                            ? `${primaryContact.fullName} · ${primaryContact.phone}`
+                            : 'Контакт не вказано'}
                         </p>
                       </div>
 
@@ -403,11 +370,13 @@ export function ProjectsPage() {
               </div>
 
               <div className="mt-5 hidden overflow-x-auto md:block">
-                <table className="w-full min-w-[1050px] border-collapse">
+                <table className="w-full min-w-[1180px] border-collapse">
                   <thead>
                     <tr className="border-y border-slate-100 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                       <th className="px-3 py-4">Назва проєкту</th>
                       <th className="px-3 py-4">Статус</th>
+                      <th className="px-3 py-4">Джерело</th>
+                      <th className="px-3 py-4">Відповідальний</th>
                       <th className="px-3 py-4">Локація</th>
                       <th className="px-3 py-4">Контакт</th>
                       <th className="px-3 py-4 text-right">Прихід</th>
@@ -421,6 +390,7 @@ export function ProjectsPage() {
                       const primaryContact = project.contacts[0]
                       const status = statusInfo[project.status]
                       const summary = project.financialSummary
+                      const responsible = getResponsible(project)
 
                       return (
                         <tr
@@ -428,7 +398,7 @@ export function ProjectsPage() {
                           className="border-b border-slate-100 text-sm transition hover:bg-slate-50"
                         >
                           <td className="px-3 py-5">
-                            <p className="font-semibold text-slate-900">
+                            <p className="max-w-[240px] break-words font-semibold text-slate-900">
                               {project.name}
                             </p>
 
@@ -445,6 +415,14 @@ export function ProjectsPage() {
                             >
                               {status.label}
                             </span>
+                          </td>
+
+                          <td className="px-3 py-5 text-slate-600">
+                            {project.source || '—'}
+                          </td>
+
+                          <td className="px-3 py-5 text-slate-600">
+                            {responsible || '—'}
                           </td>
 
                           <td className="px-3 py-5 text-slate-600">

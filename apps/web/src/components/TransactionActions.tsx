@@ -29,6 +29,20 @@ const paymentMethodLabels: Record<ApiPaymentMethod, string> = {
   OTHER: 'Інше',
 }
 
+const bankOptions = [
+  '',
+  'КредоБанк',
+  'ПриватБанк',
+  'ОщадБанк',
+  'Монобанк',
+  'Райффайзен Банк',
+  'ПУМБ',
+  'Укргазбанк',
+  'Укрсиббанк',
+  'Sense Bank',
+  'Інше',
+]
+
 function toDateTimeLocal(value: string) {
   const date = new Date(value)
 
@@ -173,10 +187,10 @@ export function TransactionActions({
       </div>
 
       {isEditing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-4 sm:items-center">
           <form
             onSubmit={handleSubmit}
-            className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl"
+            className="my-4 w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl"
           >
             <h2 className="text-xl font-bold text-slate-900">
               Редагувати {operationLabel}
@@ -249,10 +263,10 @@ export function TransactionActions({
 
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-700">
-                    Рахунок / каса
+                    Банк
                   </span>
 
-                  <input
+                  <select
                     value={form.accountName}
                     onChange={(event) =>
                       setForm((current) => ({
@@ -260,8 +274,14 @@ export function TransactionActions({
                         accountName: event.target.value,
                       }))
                     }
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                  />
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                  >
+                    {bankOptions.map((bank) => (
+                      <option key={bank || 'empty'} value={bank}>
+                        {bank || 'Оберіть банк'}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
 
@@ -301,6 +321,17 @@ export function TransactionActions({
                   className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 />
               </label>
+
+              {(transaction.attachments ?? []).length > 0 && (
+                <div className="rounded-2xl bg-slate-50 px-3 py-3">
+                  <p className="text-sm font-semibold text-slate-700">
+                    Файли операції
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Файли можна додати під час створення операції.
+                  </p>
+                </div>
+              )}
 
               {error && (
                 <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">

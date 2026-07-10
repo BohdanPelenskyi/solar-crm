@@ -11,6 +11,9 @@ type EditableProject = {
   name: string
   status: ApiProjectStatus
   source: string | null
+  brigade: string | null
+  responsiblePrimary: string | null
+  responsibleSecondary: string | null
   location: string | null
 }
 
@@ -28,6 +31,20 @@ const statusLabels: Record<ApiProjectStatus, string> = {
   CANCELED: 'Скасовано',
 }
 
+const sourceOptions = [
+  '',
+  'Instagram',
+  'Facebook',
+  'Google',
+  'TikTok',
+  'Сайт',
+  'Рекомендація',
+  'Дзвінок',
+  'Виставка',
+  'OLX',
+  'Інше',
+]
+
 export function EditProjectPanel({
   project,
   onUpdated,
@@ -41,6 +58,9 @@ export function EditProjectPanel({
     name: project.name,
     status: project.status,
     source: project.source ?? '',
+    brigade: project.brigade ?? '',
+    responsiblePrimary: project.responsiblePrimary ?? '',
+    responsibleSecondary: project.responsibleSecondary ?? '',
     location: project.location ?? '',
   })
 
@@ -53,6 +73,9 @@ export function EditProjectPanel({
       name: project.name,
       status: project.status,
       source: project.source ?? '',
+      brigade: project.brigade ?? '',
+      responsiblePrimary: project.responsiblePrimary ?? '',
+      responsibleSecondary: project.responsibleSecondary ?? '',
       location: project.location ?? '',
     })
 
@@ -85,6 +108,9 @@ export function EditProjectPanel({
         name: form.name.trim(),
         status: form.status,
         source: form.source.trim() || undefined,
+        brigade: form.brigade.trim() || undefined,
+        responsiblePrimary: form.responsiblePrimary.trim() || undefined,
+        responsibleSecondary: form.responsibleSecondary.trim() || undefined,
         location: form.location.trim() || undefined,
       })
 
@@ -116,7 +142,7 @@ export function EditProjectPanel({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
           <form
             onSubmit={handleSubmit}
-            className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl"
+            className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl"
           >
             <h2 className="text-xl font-bold text-slate-900">
               Редагувати проєкт
@@ -173,7 +199,7 @@ export function EditProjectPanel({
                   Джерело клієнта
                 </span>
 
-                <input
+                <select
                   value={form.source}
                   onChange={(event) =>
                     setForm((current) => ({
@@ -181,7 +207,66 @@ export function EditProjectPanel({
                       source: event.target.value,
                     }))
                   }
-                  placeholder="Instagram, Google, рекомендація..."
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                >
+                  {sourceOptions.map((source) => (
+                    <option key={source || 'empty'} value={source}>
+                      {source || 'Не вказано'}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-700">
+                  Бригада
+                </span>
+
+                <input
+                  value={form.brigade}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      brigade: event.target.value,
+                    }))
+                  }
+                  placeholder="Наприклад: Бригада №1"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-700">
+                  Відповідальний 1
+                </span>
+
+                <input
+                  value={form.responsiblePrimary}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      responsiblePrimary: event.target.value,
+                    }))
+                  }
+                  placeholder="Наприклад: Іван Петренко"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-700">
+                  Відповідальний 2
+                </span>
+
+                <input
+                  value={form.responsibleSecondary}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      responsibleSecondary: event.target.value,
+                    }))
+                  }
+                  placeholder="Необов’язково"
                   className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 />
               </label>

@@ -8,6 +8,7 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -100,6 +101,11 @@ export class FilesController {
     @Param('projectId', ParseIntPipe) projectId: number,
   ) {
     return this.filesService.findAllByProject(projectId)
+  }
+
+  @Patch('documents/:id/final')
+  setFinalProposal(@Param('id', ParseIntPipe) id: number) {
+    return this.filesService.setFinalProposal(id)
   }
 
   @Delete('documents/:id')

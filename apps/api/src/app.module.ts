@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ContactsModule } from './contacts/contacts.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { EquipmentModule } from './equipment/equipment.module';
 import { FilesModule } from './files/files.module';
 import { MediaModule } from './media/media.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -34,6 +35,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     MediaModule,
     TasksModule,
     DashboardModule,
+    EquipmentModule,
   ],
   controllers: [AppController],
   providers: [

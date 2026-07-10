@@ -14,6 +14,21 @@ export class CreateProjectDto {
   @IsString()
   @MaxLength(100)
   source?: string;
+  
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  brigade?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  responsiblePrimary?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  responsibleSecondary?: string;
 
   @IsOptional()
   @IsString()

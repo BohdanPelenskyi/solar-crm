@@ -27,10 +27,27 @@ const contactRoleLabels: Record<ApiContactRole, string> = {
   OTHER: 'Інше',
 }
 
+const sourceOptions = [
+  '',
+  'Instagram',
+  'Facebook',
+  'Google',
+  'TikTok',
+  'Сайт',
+  'Рекомендація',
+  'Дзвінок',
+  'Виставка',
+  'OLX',
+  'Інше',
+]
+
 const initialForm = {
   name: '',
   status: 'DRAFT' as ApiProjectStatus,
   source: '',
+  brigade: '',
+  responsiblePrimary: '',
+  responsibleSecondary: '',
   location: '',
   contactFullName: '',
   contactPhone: '',
@@ -66,6 +83,9 @@ export function CreateProjectPanel({
         name: form.name.trim(),
         status: form.status,
         source: form.source.trim() || undefined,
+        brigade: form.brigade.trim() || undefined,
+        responsiblePrimary: form.responsiblePrimary.trim() || undefined,
+        responsibleSecondary: form.responsibleSecondary.trim() || undefined,
         location: form.location.trim() || undefined,
         contactFullName: form.contactFullName.trim(),
         contactPhone: form.contactPhone.trim(),
@@ -176,7 +196,7 @@ export function CreateProjectPanel({
                     Джерело клієнта
                   </span>
 
-                  <input
+                  <select
                     value={form.source}
                     onChange={(event) =>
                       setForm((current) => ({
@@ -184,7 +204,66 @@ export function CreateProjectPanel({
                         source: event.target.value,
                       }))
                     }
-                    placeholder="Instagram, Google, рекомендація..."
+                    className="mt-1.5 min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base outline-none transition focus:border-blue-500 sm:text-sm"
+                  >
+                    {sourceOptions.map((source) => (
+                      <option key={source || 'empty'} value={source}>
+                        {source || 'Не вказано'}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Бригада
+                  </span>
+
+                  <input
+                    value={form.brigade}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        brigade: event.target.value,
+                      }))
+                    }
+                    placeholder="Наприклад: Бригада №1"
+                    className="mt-1.5 min-h-12 w-full rounded-xl border border-slate-200 px-3 py-3 text-base outline-none transition focus:border-blue-500 sm:text-sm"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Відповідальний 1
+                  </span>
+
+                  <input
+                    value={form.responsiblePrimary}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        responsiblePrimary: event.target.value,
+                      }))
+                    }
+                    placeholder="Наприклад: Іван Петренко"
+                    className="mt-1.5 min-h-12 w-full rounded-xl border border-slate-200 px-3 py-3 text-base outline-none transition focus:border-blue-500 sm:text-sm"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Відповідальний 2
+                  </span>
+
+                  <input
+                    value={form.responsibleSecondary}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        responsibleSecondary: event.target.value,
+                      }))
+                    }
+                    placeholder="Необов’язково"
                     className="mt-1.5 min-h-12 w-full rounded-xl border border-slate-200 px-3 py-3 text-base outline-none transition focus:border-blue-500 sm:text-sm"
                   />
                 </label>

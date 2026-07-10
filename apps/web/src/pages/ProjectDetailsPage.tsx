@@ -32,7 +32,9 @@ import { EditProjectPanel } from '../components/EditProjectPanel'
 import { ProjectNotes } from '../components/ProjectNotes'
 import { ProjectTasks } from '../components/ProjectTasks'
 import { TransactionActions } from '../components/TransactionActions'
+import { TransactionAttachmentManager } from '../components/TransactionAttachmentManager'
 import { ProjectProposal } from '../components/ProjectProposal'
+import { ProjectEquipment } from '../components/ProjectEquipment'
 
 const statusInfo: Record<
   ApiProjectStatus,
@@ -151,7 +153,7 @@ function FinanceBlock({
               key={transaction.id}
               className="flex flex-col gap-2 border-b border-slate-100 px-4 py-3 last:border-0 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1 overflow-hidden">
                 <p className="truncate font-semibold text-slate-800">
                   {transaction.counterparty || 'Не вказано'}
                 </p>
@@ -162,6 +164,17 @@ function FinanceBlock({
                     ? ` · ${transaction.comment}`
                     : ''}
                 </p>
+
+                {transaction.accountName && (
+                  <p className="mt-1 text-xs font-medium text-slate-500">
+                    Банк: {transaction.accountName}
+                  </p>
+                )}
+
+                <TransactionAttachmentManager
+                  transaction={transaction}
+                  onChanged={onChanged}
+                />
               </div>
 
               <div className="flex w-full shrink-0 items-center justify-between gap-2 sm:w-auto">
@@ -376,6 +389,39 @@ export function ProjectDetailsPage() {
             </div>
 
             <div className="flex gap-3">
+              <UserRound size={19} className="mt-0.5 text-blue-600" />
+
+              <div>
+                <p className="text-xs text-slate-500">Бригада</p>
+                <p className="mt-1 font-semibold text-slate-800">
+                  {project.brigade || 'Не вказано'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <UserRound size={19} className="mt-0.5 text-blue-600" />
+
+              <div>
+                <p className="text-xs text-slate-500">Відповідальний 1</p>
+                <p className="mt-1 font-semibold text-slate-800">
+                  {project.responsiblePrimary || 'Не вказано'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <UserRound size={19} className="mt-0.5 text-blue-600" />
+
+              <div>
+                <p className="text-xs text-slate-500">Відповідальний 2</p>
+                <p className="mt-1 font-semibold text-slate-800">
+                  {project.responsibleSecondary || 'Не вказано'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
               <MapPin size={19} className="mt-0.5 text-blue-600" />
 
               <div>
@@ -442,8 +488,8 @@ export function ProjectDetailsPage() {
           />
         </div>
 
-        <div className="mt-5 grid gap-5 xl:grid-cols-[1.55fr_1fr]">
-          <div className="space-y-5">
+        <div className="mt-5 grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+          <div className="min-w-0 space-y-5">
             <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -596,6 +642,12 @@ export function ProjectDetailsPage() {
               onChanged={refreshProject}
             />
 
+            <ProjectEquipment
+              projectId={project.id}
+              equipment={project.equipment}
+              onChanged={refreshProject}
+            />
+
             <section className="rounded-3xl bg-white p-5 shadow-sm sm:p-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -667,7 +719,10 @@ export function ProjectDetailsPage() {
                                 : 'Відео'}
                             </p>
 
-                            <p className="mt-1 truncate text-sm font-semibold text-slate-800">
+                            <p
+                              title={media.originalName}
+                              className="mt-1 max-w-full overflow-hidden break-all text-sm font-semibold text-slate-800 sm:truncate sm:break-normal"
+                            >
                               {media.originalName}
                             </p>
 
@@ -690,14 +745,14 @@ export function ProjectDetailsPage() {
             </section>
           </div>
 
-          <aside className="space-y-5">
+          <aside className="min-w-0 space-y-5">
             <ProjectProposal
             projectId={project.id}
             files={project.files}
             onChanged={refreshProject}
             />
 
-            <section className="rounded-3xl bg-white p-5 shadow-sm">
+            <section className="min-w-0 max-w-full overflow-hidden rounded-3xl bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-lg font-bold text-slate-900">
                   Документи
@@ -718,15 +773,16 @@ export function ProjectDetailsPage() {
                   {regularFiles.map((file) => (
                     <div
                       key={file.id}
-                      className="flex flex-col items-stretch gap-2 rounded-2xl border border-slate-100 p-3 sm:flex-row sm:items-center sm:gap-3"
+                      className="grid w-full max-w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-2xl border border-slate-100 p-3"
                     >
                       <a
                         href={getUploadUrl(file.storageKey)}
                         target="_blank"
                         rel="noreferrer"
-                        className="min-w-0 flex-1"
+                        className="block min-w-0 max-w-full overflow-hidden"
+                        title={file.originalName}
                       >
-                        <p className="truncate text-sm font-semibold text-slate-800">
+                        <p className="max-w-full overflow-hidden break-all text-sm font-semibold text-slate-800 sm:truncate sm:break-normal">
                           {file.originalName}
                         </p>
 

@@ -138,6 +138,12 @@ export type ApiFileCategory =
 
 export type ApiMediaType = 'PHOTO' | 'VIDEO'
 
+export type ApiEquipmentStatus =
+  | 'ORDERED'
+  | 'PAID'
+  | 'IN_STOCK'
+  | 'ON_SITE'
+
 export type ApiProjectContact = {
   id: number
   projectId: number
@@ -148,7 +154,21 @@ export type ApiProjectContact = {
   isPrimary: boolean
   createdAt: string
 }
-export type ApiPaymentMethod = | 'CASH' | 'BANK_TRANSFER' | 'CARD' | 'OTHER'
+export type ApiPaymentMethod =
+  | 'CASH'
+  | 'BANK_TRANSFER'
+  | 'CARD'
+  | 'OTHER'
+
+export type ApiTransactionAttachment = {
+  id: number
+  transactionId: number
+  originalName: string
+  storageKey: string
+  mimeType: string
+  size: number
+  createdAt: string
+}
 
 export type ApiFinancialTransaction = {
   id: number
@@ -156,11 +176,12 @@ export type ApiFinancialTransaction = {
   type: ApiTransactionType
   amount: string | number
   counterparty: string | null
- paymentMethod: ApiPaymentMethod
+  paymentMethod: ApiPaymentMethod
   accountName: string | null
   occurredAt: string
   comment: string | null
   receiptPath: string | null
+  attachments: ApiTransactionAttachment[]
   createdAt: string
 }
 
@@ -189,21 +210,33 @@ export type ApiProjectMedia = {
   createdAt: string
 }
 
+export type ApiProjectEquipment = {
+  id: number
+  projectId: number
+  name: string
+  status: ApiEquipmentStatus
+  createdAt: string
+  updatedAt: string
+}
+
 export type ApiProject = {
   id: number
   name: string
   status: ApiProjectStatus
   source: string | null
+  brigade: string | null
+  responsiblePrimary: string | null
+  responsibleSecondary: string | null
   location: string | null
   notes: string | null
   createdAt: string
   updatedAt: string
   contacts: ApiProjectContact[]
   financialSummary: {
-  income: number
-  expenses: number
-  margin: number
-  transactionsCount: number
+    income: number
+    expenses: number
+    margin: number
+    transactionsCount: number
   }
 }
 
@@ -232,6 +265,7 @@ export type ApiProjectDetails = ApiProject & {
   files: ApiProjectFile[]
   media: ApiProjectMedia[]
   tasks: ApiProjectTask[]
+  equipment: ApiProjectEquipment[]
 }
 
 async function request<T>(path: string): Promise<T> {
@@ -289,6 +323,9 @@ export type CreateProjectPayload = {
   name: string
   status: ApiProjectStatus
   source?: string
+  brigade?: string
+  responsiblePrimary?: string
+  responsibleSecondary?: string
   location?: string
   notes?: string
   contactFullName: string
@@ -302,6 +339,9 @@ export type CreatedProject = {
   name: string
   status: ApiProjectStatus
   source: string | null
+  brigade: string | null
+  responsiblePrimary: string | null
+  responsibleSecondary: string | null
   location: string | null
   notes: string | null
   createdAt: string
@@ -339,20 +379,45 @@ export type CreateProjectTransactionPayload = {
 export async function createProjectTransaction(
   projectId: number,
   payload: CreateProjectTransactionPayload,
+  attachments: File[] = [],
 ): Promise<ApiFinancialTransaction> {
+  const formData = new FormData()
+
+  formData.append('type', payload.type)
+  formData.append('amount', String(payload.amount))
+  formData.append('paymentMethod', payload.paymentMethod)
+  formData.append('occurredAt', payload.occurredAt)
+
+  if (payload.counterparty) {
+    formData.append('counterparty', payload.counterparty)
+  }
+
+  if (payload.accountName) {
+    formData.append('accountName', payload.accountName)
+  }
+
+  if (payload.comment) {
+    formData.append('comment', payload.comment)
+  }
+
+  attachments.slice(0, 2).forEach((file) => {
+    formData.append('attachments', file)
+  })
+
   const response = await apiFetch(
     `${API_URL}/projects/${projectId}/transactions`,
     {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+      body: formData,
     },
   )
 
   if (!response.ok) {
-    throw new Error('Не вдалося додати фінансову операцію')
+    const body = await response.json().catch(() => null)
+
+    throw new Error(
+      getErrorMessage(body, 'Не вдалося додати фінансову операцію'),
+    )
   }
 
   return response.json() as Promise<ApiFinancialTransaction>
@@ -392,6 +457,55 @@ export async function deleteProjectTransaction(
   }
 }
 
+
+export async function addTransactionAttachments(
+  transactionId: number,
+  attachments: File[],
+): Promise<ApiFinancialTransaction> {
+  const formData = new FormData()
+
+  attachments.slice(0, 2).forEach((file) => {
+    formData.append('attachments', file)
+  })
+
+  const response = await apiFetch(
+    `${API_URL}/transactions/${transactionId}/attachments`,
+    {
+      method: 'POST',
+      body: formData,
+    },
+  )
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+
+    throw new Error(
+      getErrorMessage(body, 'Не вдалося додати файл до операції'),
+    )
+  }
+
+  return response.json() as Promise<ApiFinancialTransaction>
+}
+
+export async function deleteTransactionAttachment(
+  attachmentId: number,
+): Promise<void> {
+  const response = await apiFetch(
+    `${API_URL}/transaction-attachments/${attachmentId}`,
+    {
+      method: 'DELETE',
+    },
+  )
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+
+    throw new Error(
+      getErrorMessage(body, 'Не вдалося видалити файл з операції'),
+    )
+  }
+}
+
 export async function uploadProjectDocument(
   projectId: number,
   file: File,
@@ -420,6 +534,24 @@ export async function uploadProjectDocument(
       Array.isArray(message)
         ? message.join(', ')
         : message || 'Не вдалося завантажити документ',
+    )
+  }
+
+  return response.json() as Promise<ApiProjectFile>
+}
+
+export async function setFinalProjectDocument(
+  documentId: number,
+): Promise<ApiProjectFile> {
+  const response = await apiFetch(`${API_URL}/documents/${documentId}/final`, {
+    method: 'PATCH',
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+
+    throw new Error(
+      getErrorMessage(body, 'Не вдалося зробити КП фінальною'),
     )
   }
 
@@ -470,6 +602,9 @@ export type UpdateProjectPayload = {
   name?: string
   status?: ApiProjectStatus
   source?: string
+  brigade?: string
+  responsiblePrimary?: string
+  responsibleSecondary?: string
   location?: string
   notes?: string
 }
@@ -707,6 +842,82 @@ export async function deleteProjectTask(
   }
 }
 
+
+export type CreateProjectEquipmentPayload = {
+  name: string
+  status?: ApiEquipmentStatus
+}
+
+export type UpdateProjectEquipmentPayload = {
+  name?: string
+  status?: ApiEquipmentStatus
+}
+
+export async function createProjectEquipment(
+  projectId: number,
+  payload: CreateProjectEquipmentPayload,
+): Promise<ApiProjectEquipment> {
+  const response = await apiFetch(
+    `${API_URL}/projects/${projectId}/equipment`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    },
+  )
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+
+    throw new Error(
+      getErrorMessage(body, 'Не вдалося додати обладнання'),
+    )
+  }
+
+  return response.json() as Promise<ApiProjectEquipment>
+}
+
+export async function updateProjectEquipment(
+  equipmentId: number,
+  payload: UpdateProjectEquipmentPayload,
+): Promise<ApiProjectEquipment> {
+  const response = await apiFetch(`${API_URL}/equipment/${equipmentId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+
+    throw new Error(
+      getErrorMessage(body, 'Не вдалося оновити обладнання'),
+    )
+  }
+
+  return response.json() as Promise<ApiProjectEquipment>
+}
+
+export async function deleteProjectEquipment(
+  equipmentId: number,
+): Promise<void> {
+  const response = await apiFetch(`${API_URL}/equipment/${equipmentId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+
+    throw new Error(
+      getErrorMessage(body, 'Не вдалося видалити обладнання'),
+    )
+  }
+}
+
 export type ApiDashboardTask = {
   id: number
   projectId: number
@@ -757,20 +968,20 @@ export async function getDashboardOverview(): Promise<ApiDashboardOverview> {
 }
 
 export type ApiGlobalTask = ApiProjectTask & {
-project: {
-id: number
-name: string
-status: ApiProjectStatus
-location: string | null
+  project: {
+    id: number
+    name: string
+    status: ApiProjectStatus
+    location: string | null
+  }
 }
-}
+
 export async function getAllTasks(): Promise<ApiGlobalTask[]> {
-const response = await apiFetch(`${API_URL}/tasks`)
+  const response = await apiFetch(`${API_URL}/tasks`)
 
-if (!response.ok) {
-throw new Error('Не вдалося завантажити завдання')
+  if (!response.ok) {
+    throw new Error('Не вдалося завантажити завдання')
+  }
+
+  return response.json() as Promise<ApiGlobalTask[]>
 }
-
-return response.json() as Promise<ApiGlobalTask[]>
-}
-

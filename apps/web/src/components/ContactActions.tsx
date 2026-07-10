@@ -151,10 +151,10 @@ export function ContactActions({
       </div>
 
       {isEditing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-4 sm:items-center">
           <form
             onSubmit={handleSubmit}
-            className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl"
+            className="my-4 w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl"
           >
             <h2 className="text-xl font-bold text-slate-900">
               Редагувати контакт
@@ -197,7 +197,7 @@ export function ContactActions({
                 />
               </label>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4">
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-700">
                     Роль

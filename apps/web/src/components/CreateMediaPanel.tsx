@@ -1,5 +1,5 @@
-import { useRef, useState, type FormEvent } from 'react'
-import { Upload } from 'lucide-react'
+import { useRef, useState, type DragEvent, type FormEvent } from 'react'
+import { FileText, Upload } from 'lucide-react'
 import { uploadProjectMedia } from '../lib/api'
 
 type CreateMediaPanelProps = {
@@ -51,21 +51,36 @@ export function CreateMediaPanel({
     setIsOpen(false)
   }
 
+  function selectFile(file: File | null) {
+    if (!file) {
+      setSelectedFile(null)
+      return
+    }
+
+    if (!allowedMimeTypes.has(file.type)) {
+      setError('Дозволені JPG, PNG, WEBP, MP4, WEBM та MOV')
+      return
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      setError('Максимальний розмір файлу — 50 МБ')
+      return
+    }
+
+    setSelectedFile(file)
+    setError('')
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    selectFile(event.dataTransfer.files[0] ?? null)
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     if (!selectedFile) {
       setError('Спочатку вибери фото або відео')
-      return
-    }
-
-    if (!allowedMimeTypes.has(selectedFile.type)) {
-      setError('Дозволені JPG, PNG, WEBP, MP4, WEBM та MOV')
-      return
-    }
-
-    if (selectedFile.size > 50 * 1024 * 1024) {
-      setError('Максимальний розмір файлу — 50 МБ')
       return
     }
 
@@ -101,10 +116,10 @@ export function CreateMediaPanel({
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-4 sm:items-center">
           <form
             onSubmit={handleSubmit}
-            className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl"
+            className="my-4 w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl"
           >
             <h2 className="text-xl font-bold text-slate-900">
               Завантажити фото або відео
@@ -115,10 +130,27 @@ export function CreateMediaPanel({
             </p>
 
             <div className="mt-6 space-y-4">
-              <label className="block">
+              <div>
                 <span className="text-sm font-semibold text-slate-700">
                   Файл
                 </span>
+
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => inputRef.current?.click()}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={handleDrop}
+                  className="mt-1.5 cursor-pointer rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center transition hover:border-blue-300 hover:bg-blue-50"
+                >
+                  <Upload size={24} className="mx-auto text-blue-600" />
+                  <p className="mt-2 text-sm font-semibold text-slate-700">
+                    Перетягни файл сюди або натисни для вибору
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    JPG, PNG, WEBP, MP4, WEBM або MOV
+                  </p>
+                </div>
 
                 <input
                   ref={inputRef}
@@ -126,21 +158,23 @@ export function CreateMediaPanel({
                   type="file"
                   accept=".jpg,.jpeg,.png,.webp,.mp4,.webm,.mov"
                   onChange={(event) =>
-                    setSelectedFile(event.target.files?.[0] ?? null)
+                    selectFile(event.target.files?.[0] ?? null)
                   }
-                  className="mt-1.5 block w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  className="hidden"
                 />
 
                 {selectedFile && (
-                  <p className="mt-2 text-sm text-slate-600">
-                    Обрано:{' '}
-                    <span className="font-semibold">
+                  <div className="mt-3 flex min-w-0 items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                    <FileText size={16} className="shrink-0 text-blue-600" />
+                    <span className="min-w-0 flex-1 truncate font-semibold">
                       {selectedFile.name}
-                    </span>{' '}
-                    · {formatFileSize(selectedFile.size)} МБ
-                  </p>
+                    </span>
+                    <span className="shrink-0 text-xs text-slate-500">
+                      {formatFileSize(selectedFile.size)} МБ
+                    </span>
+                  </div>
                 )}
-              </label>
+              </div>
 
               {error && (
                 <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">

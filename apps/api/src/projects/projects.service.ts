@@ -114,6 +114,13 @@ export class ProjectsService {
           orderBy: {
             occurredAt: 'desc',
           },
+          include: {
+            attachments: {
+              orderBy: {
+                createdAt: 'asc',
+              },
+            },
+          },
         },
         files: {
           orderBy: {
@@ -129,6 +136,12 @@ export class ProjectsService {
           orderBy: [
             { status: 'asc' },
             { dueDate: 'asc' },
+            { createdAt: 'desc' },
+          ],
+        },
+        equipment: {
+          orderBy: [
+            { updatedAt: 'desc' },
             { createdAt: 'desc' },
           ],
         },
@@ -168,6 +181,15 @@ export class ProjectsService {
             storageKey: true,
           },
         },
+        transactions: {
+          select: {
+            attachments: {
+              select: {
+                storageKey: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -178,6 +200,9 @@ export class ProjectsService {
     const storageKeys = [
       ...project.files.map((file) => file.storageKey),
       ...project.media.map((media) => media.storageKey),
+      ...project.transactions.flatMap((transaction) =>
+        transaction.attachments.map((attachment) => attachment.storageKey),
+      ),
     ];
 
     await this.prisma.$transaction(async (tx) => {

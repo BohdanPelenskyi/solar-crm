@@ -68,19 +68,30 @@ enum UserRole {
   VIEWER
 }
 
+enum EquipmentStatus {
+  ORDERED
+  PAID
+  IN_STOCK
+  ON_SITE
+}
+
 model Project {
   id       Int           @id @default(autoincrement())
   name     String
   status   ProjectStatus @default(DRAFT)
-  source   String?
-  location String?
-  notes    String?
+  source               String?
+  brigade             String?
+  responsiblePrimary  String?
+  responsibleSecondary String?
+  location             String?
+  notes                String?
 
   contacts     ProjectContact[]
   transactions FinancialTransaction[]
   files        ProjectFile[]
   media        ProjectMedia[]
   tasks        ProjectTask[]
+  equipment    ProjectEquipment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -115,12 +126,41 @@ model FinancialTransaction {
   occurredAt    DateTime
   comment       String?
   receiptPath   String?
+  attachments   TransactionAttachment[]
   createdAt     DateTime        @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId, type])
   @@index([occurredAt])
+}
+
+model TransactionAttachment {
+  id            Int      @id @default(autoincrement())
+  transactionId Int
+  originalName   String
+  storageKey     String
+  mimeType       String
+  size           Int
+  createdAt      DateTime @default(now())
+
+  transaction FinancialTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+}
+
+model ProjectEquipment {
+  id        Int             @id @default(autoincrement())
+  projectId Int
+  name      String
+  status    EquipmentStatus @default(ORDERED)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([status])
 }
 
 model ProjectFile {
