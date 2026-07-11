@@ -28,17 +28,17 @@ const contactRoleLabels: Record<ApiContactRole, string> = {
 }
 
 const sourceOptions = [
-  '',
-  'Instagram',
-  'Facebook',
-  'Google',
-  'TikTok',
+  'Назар Жолобович',
+  'Андрій Ковальчук',
+  'Василь Женчур',
+  'Василь Пеленський',
   'Сайт',
-  'Рекомендація',
-  'Дзвінок',
-  'Виставка',
-  'OLX',
-  'Інше',
+  'Банк Львів',
+  'Приват Банк',
+  'Юля',
+  'Володимир Кравцов',
+  'Ігор Муха',
+  'Павло Муха',
 ]
 
 const initialForm = {
@@ -197,21 +197,23 @@ export function CreateProjectPanel({
                   </span>
 
                   <select
-                    value={form.source}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        source: event.target.value,
-                      }))
-                    }
-                    className="mt-1.5 min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base outline-none transition focus:border-blue-500 sm:text-sm"
-                  >
-                    {sourceOptions.map((source) => (
-                      <option key={source || 'empty'} value={source}>
-                        {source || 'Не вказано'}
-                      </option>
-                    ))}
-                  </select>
+    value={form.source}
+  onChange={(event) =>
+    setForm((current) => ({
+      ...current,
+      source: event.target.value,
+    }))
+  }
+  className="mt-1.5 min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base outline-none transition focus:border-blue-500 sm:text-sm"
+>
+  <option value="">Не вказано</option>
+
+  {sourceOptions.map((source) => (
+    <option key={source} value={source}>
+      {source}
+    </option>
+  ))}
+</select>
                 </label>
 
                 <label className="block">
