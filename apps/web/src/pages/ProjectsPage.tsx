@@ -187,8 +187,6 @@ export function ProjectsPage() {
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-5 pb-24 sm:px-8 sm:py-7 md:pb-7">
       <div className="mx-auto max-w-7xl">
-        <p className="text-sm text-slate-500">CRM / Проєкти</p>
-
         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             Список проєктів
@@ -208,9 +206,6 @@ export function ProjectsPage() {
                 Усі проєкти
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
-                Статуси, джерела, відповідальні та фінанси по обʼєктах
-              </p>
             </div>
 
             <span className="w-fit rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600">

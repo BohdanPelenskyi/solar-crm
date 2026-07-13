@@ -1,5 +1,5 @@
 import { useRef, useState, type DragEvent, type FormEvent } from 'react'
-import { Paperclip, Plus, Trash2, Upload } from 'lucide-react'
+import { Paperclip, Plus, Trash2 } from 'lucide-react'
 import {
   createProjectTransaction,
   type ApiPaymentMethod,
@@ -172,7 +172,9 @@ export function CreateTransactionPanel({
   }
 
   function removeSelectedAttachment(index: number) {
-    setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))
+    setAttachments((current) =>
+      current.filter((_, itemIndex) => itemIndex !== index),
+    )
   }
 
   function handleDrop(
@@ -235,41 +237,33 @@ export function CreateTransactionPanel({
       .filter((attachment) => attachment.type === attachmentType)
 
     return (
-      <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+      <div
+        onDragOver={(event) => {
+          event.preventDefault()
+          setDraggingType(attachmentType)
+        }}
+        onDragLeave={() => setDraggingType(null)}
+        onDrop={(event) => handleDrop(event, attachmentType)}
+        className={`rounded-xl border px-3 py-2.5 transition ${
+          draggingType === attachmentType
+            ? 'border-blue-300 bg-blue-50'
+            : 'border-slate-100 bg-slate-50/70'
+        }`}
+      >
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-bold text-slate-800">
-              {label}
-            </p>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Можна додати один або декілька файлів
-            </p>
-          </div>
-        </div>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            {label}
+          </p>
 
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(event) => {
-            event.preventDefault()
-            setDraggingType(attachmentType)
-          }}
-          onDragLeave={() => setDraggingType(null)}
-          onDrop={(event) => handleDrop(event, attachmentType)}
-          className={`mt-3 cursor-pointer rounded-2xl border-2 border-dashed px-4 py-5 text-center transition ${
-            draggingType === attachmentType
-              ? 'border-blue-300 bg-blue-50'
-              : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50'
-          }`}
-        >
-          <Upload size={22} className="mx-auto text-blue-600" />
-          <p className="mt-2 text-sm font-semibold text-slate-700">
-            Перетягни файл сюди або натисни для вибору
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            PDF, Word, Excel або зображення до 15 МБ
-          </p>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-blue-700 ring-1 ring-slate-200 transition hover:bg-blue-50 hover:ring-blue-200"
+            title={`Додати ${label.toLowerCase()}`}
+            aria-label={`Додати ${label.toLowerCase()}`}
+          >
+            <Plus size={16} />
+          </button>
         </div>
 
         <input
@@ -289,17 +283,17 @@ export function CreateTransactionPanel({
         />
 
         {selectedFiles.length > 0 && (
-          <div className="mt-3 space-y-2">
+          <div className="mt-2 space-y-1.5">
             {selectedFiles.map((attachment) => (
               <div
                 key={`${attachment.file.name}-${attachment.file.size}-${attachment.index}`}
-                className="flex min-w-0 items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm text-slate-700"
+                className="flex min-w-0 items-center gap-2 rounded-lg bg-white px-2 py-1.5 text-xs text-slate-700"
               >
-                <Paperclip size={15} className="shrink-0 text-blue-600" />
+                <Paperclip size={13} className="shrink-0 text-blue-600" />
                 <span className="min-w-0 flex-1 truncate font-medium">
                   {attachment.file.name}
                 </span>
-                <span className="shrink-0 text-xs text-slate-500">
+                <span className="shrink-0 text-slate-500">
                   {formatFileSize(attachment.file.size)}
                 </span>
                 <button
@@ -308,7 +302,7 @@ export function CreateTransactionPanel({
                   className="shrink-0 rounded p-1 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
                   title="Прибрати файл"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={13} />
                 </button>
               </div>
             ))}
@@ -334,61 +328,87 @@ export function CreateTransactionPanel({
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-4 sm:items-center">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-3">
           <form
             onSubmit={handleSubmit}
-            className="my-4 w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl"
+            className="my-3 flex max-h-[calc(100vh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
           >
-            <h2 className="text-xl font-bold text-slate-900">
-              Додати {operationLabel}
-            </h2>
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+              <h2 className="text-xl font-bold text-slate-900">
+                Додати {operationLabel}
+              </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Фінансова операція для цього проєкту
-            </p>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Закрити
+              </button>
+            </div>
 
-            <div className="mt-6 space-y-4">
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">
-                  Сума, грн
-                </span>
-
-                <input
-                  required
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      amount: event.target.value,
-                    }))
-                  }
-                  placeholder="Наприклад: 25000"
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">
-                  Контрагент
-                </span>
-
-                <input
-                  value={form.counterparty}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      counterparty: event.target.value,
-                    }))
-                  }
-                  placeholder="Клієнт, постачальник, підрядник..."
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                />
-              </label>
-
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
               <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Сума, грн
+                  </span>
+
+                  <input
+                    required
+                    autoFocus
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={form.amount}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        amount: event.target.value,
+                      }))
+                    }
+                    placeholder="25000"
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Дата операції
+                  </span>
+
+                  <input
+                    required
+                    type="datetime-local"
+                    value={form.occurredAt}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        occurredAt: event.target.value,
+                      }))
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                  />
+                </label>
+
+                <label className="block sm:col-span-2">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Контрагент
+                  </span>
+
+                  <input
+                    value={form.counterparty}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        counterparty: event.target.value,
+                      }))
+                    }
+                    placeholder="Клієнт, постачальник, підрядник..."
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                  />
+                </label>
+
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-700">
                     Спосіб оплати
@@ -436,63 +456,42 @@ export function CreateTransactionPanel({
                     ))}
                   </select>
                 </label>
+
+                <label className="block sm:col-span-2">
+                  <span className="text-sm font-semibold text-slate-700">
+                    Коментар
+                  </span>
+
+                  <textarea
+                    value={form.comment}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        comment: event.target.value,
+                      }))
+                    }
+                    rows={3}
+                    placeholder="Аванс, закупівля, рахунок..."
+                    className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
+                  />
+                </label>
               </div>
 
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">
-                  Дата операції
-                </span>
-
-                <input
-                  required
-                  type="datetime-local"
-                  value={form.occurredAt}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      occurredAt: event.target.value,
-                    }))
-                  }
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">
-                  Коментар
-                </span>
-
-                <textarea
-                  rows={3}
-                  value={form.comment}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      comment: event.target.value,
-                    }))
-                  }
-                  placeholder="Наприклад: аванс, закупівля панелей..."
-                  className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                />
-              </label>
-
-              <div className="space-y-3">
-                <span className="text-sm font-semibold text-slate-700">
-                  Документи до операції
-                </span>
-
-                {renderUploadZone('INVOICE')}
-                {renderUploadZone('EXPENSE_DOC')}
+              <div className="mt-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {renderUploadZone('INVOICE')}
+                  {renderUploadZone('EXPENSE_DOC')}
+                </div>
               </div>
 
               {error && (
-                <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+                <p className="mt-4 rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
                   {error}
                 </p>
               )}
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end sm:gap-3">
               <button
                 type="button"
                 onClick={closeModal}
@@ -504,11 +503,7 @@ export function CreateTransactionPanel({
               <button
                 type="submit"
                 disabled={isSaving}
-                className={`rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 ${
-                  isIncome
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-rose-600 hover:bg-rose-700'
-                }`}
+                className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
               >
                 {isSaving ? 'Збереження...' : 'Зберегти'}
               </button>

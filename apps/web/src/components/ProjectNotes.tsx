@@ -79,9 +79,6 @@ export function ProjectNotes({
               Нотатки
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Деталі об’єкта, домовленості та важлива інформація.
-            </p>
           </div>
         </div>
 

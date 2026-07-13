@@ -148,10 +148,6 @@ export function EditProjectPanel({
               Редагувати проєкт
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Зміни основні дані об’єкта
-            </p>
-
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <label className="block sm:col-span-2">
                 <span className="text-sm font-semibold text-slate-700">

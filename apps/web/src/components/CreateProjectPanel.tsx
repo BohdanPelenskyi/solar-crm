@@ -130,10 +130,6 @@ export function CreateProjectPanel({
                 <h2 className="text-xl font-bold text-slate-900">
                   Новий проєкт
                 </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Створи картку нового об’єкта та основний контакт клієнта
-                </p>
               </div>
 
               <button
@@ -292,10 +288,6 @@ export function CreateProjectPanel({
                   <h3 className="font-bold text-slate-900">
                     Основний контакт
                   </h3>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    Контакт автоматично буде доданий у блок «Контакти».
-                  </p>
                 </div>
 
                 <label className="block">

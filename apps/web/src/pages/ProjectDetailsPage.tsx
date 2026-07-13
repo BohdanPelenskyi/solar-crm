@@ -486,12 +486,9 @@ export function ProjectDetailsPage() {
               Фінанси
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Доходи та витрати проєкту
-            </p>
           </div>
 
-          <div className="mt-5 grid gap-5 xl:grid-cols-2">
+          <div className="mt-5 grid items-start gap-5 xl:grid-cols-2">
             <FinanceBlock
               title="Прихід"
               type="INCOME"
@@ -527,9 +524,6 @@ export function ProjectDetailsPage() {
                     Контакти
                   </h2>
 
-                  <p className="mt-1 text-sm text-slate-500">
-                    Контактні особи клієнта
-                  </p>
                 </div>
 
                 <CreateContactPanel
@@ -688,9 +682,6 @@ export function ProjectDetailsPage() {
                     Фото та відео
                   </h2>
 
-                  <p className="mt-1 text-sm text-slate-500">
-                    Матеріали з об’єкта
-                  </p>
                 </div>
 
                 <CreateMediaPanel

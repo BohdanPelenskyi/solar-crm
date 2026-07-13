@@ -204,9 +204,6 @@ return (
 </h2>
 </div>
 
-        <p className="mt-1 text-sm text-slate-500">
-          План робіт за проєктом
-        </p>
       </div>
 
       {canAdd && (

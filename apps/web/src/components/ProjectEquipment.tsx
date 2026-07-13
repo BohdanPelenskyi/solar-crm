@@ -156,9 +156,6 @@ export function ProjectEquipment({
             Обладнання
           </h2>
 
-          <p className="mt-1 text-sm text-slate-500">
-            Обладнання проєкту та його поточний статус
-          </p>
         </div>
 
         {canManage && (

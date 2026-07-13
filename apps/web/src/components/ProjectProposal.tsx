@@ -171,10 +171,6 @@ export function ProjectProposal({
           <h2 className="text-lg font-bold text-slate-900">
             Комерційна пропозиція
           </h2>
-
-          <p className="mt-1 text-sm text-slate-500">
-            PDF-версії пропозицій для цього проєкту
-          </p>
         </div>
 
         <button
@@ -188,19 +184,19 @@ export function ProjectProposal({
       </div>
 
       {finalProposal ? (
-        <div className="mt-5 max-w-full overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
+        <div className="mt-4 max-w-full overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+          <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600">
               <FileText size={20} />
             </span>
 
             <div className="min-w-0 overflow-hidden">
-              <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-emerald-600 px-2 py-1 text-xs font-bold text-white">
-                <CheckCircle2 size={13} className="shrink-0" />
-                <span className="truncate">Фінальна КП</span>
-              </span>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-600 px-2 py-1 text-xs font-bold text-white">
+                  <CheckCircle2 size={13} className="shrink-0" />
+                  Фінальна КП
+                </span>
 
-              <div className="mt-2 flex max-w-full min-w-0 items-center gap-1 overflow-hidden">
                 <a
                   href={getUploadUrl(finalProposal.storageKey)}
                   target="_blank"
@@ -210,16 +206,6 @@ export function ProjectProposal({
                 >
                   {finalProposal.originalName}
                 </a>
-
-                <a
-                  href={getUploadUrl(finalProposal.storageKey)}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Відкрити файл"
-                  className="shrink-0 text-slate-700 hover:text-blue-700"
-                >
-                  <ExternalLink size={15} />
-                </a>
               </div>
 
               <p className="mt-1 text-xs text-slate-500">
@@ -228,7 +214,17 @@ export function ProjectProposal({
               </p>
             </div>
 
-            <div className="shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
+              <a
+                href={getUploadUrl(finalProposal.storageKey)}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Відкрити файл"
+                className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white hover:text-blue-700"
+              >
+                <ExternalLink size={15} />
+              </a>
+
               <AttachmentDeleteButton
                 kind="document"
                 id={finalProposal.id}
@@ -243,10 +239,6 @@ export function ProjectProposal({
 
           <p className="mt-3 text-sm font-semibold text-slate-700">
             Фінальна комерційна пропозиція ще не визначена
-          </p>
-
-          <p className="mt-1 text-sm text-slate-500">
-            Завантаж PDF і відміть галочку «Фінальна» або вибери фінальну КП зі списку.
           </p>
         </div>
       )}
@@ -317,10 +309,6 @@ export function ProjectProposal({
               Завантажити комерційну пропозицію
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Доступний лише PDF-файл до 15 МБ.
-            </p>
-
             <div className="mt-6 space-y-4">
               <div>
                 <span className="text-sm font-semibold text-slate-700">
@@ -333,14 +321,11 @@ export function ProjectProposal({
                   onClick={() => inputRef.current?.click()}
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={handleDrop}
-                  className="mt-1.5 cursor-pointer rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center transition hover:border-blue-300 hover:bg-blue-50"
+                  className="mt-1.5 cursor-pointer rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center transition hover:border-blue-300 hover:bg-blue-50"
                 >
-                  <Upload size={24} className="mx-auto text-blue-600" />
+                  <Upload size={20} className="mx-auto text-blue-600" />
                   <p className="mt-2 text-sm font-semibold text-slate-700">
-                    Перетягни PDF сюди або натисни для вибору
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Один PDF-файл до 15 МБ
+                    Перетягни PDF або натисни
                   </p>
                 </div>
 
@@ -384,10 +369,6 @@ export function ProjectProposal({
                 <span>
                   <span className="block text-sm font-semibold text-slate-800">
                     Зробити основною фінальною КП
-                  </span>
-
-                  <span className="mt-1 block text-xs text-slate-600">
-                    Попередня фінальна пропозиція залишиться в історії.
                   </span>
                 </span>
               </label>
