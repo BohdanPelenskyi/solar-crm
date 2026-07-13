@@ -7,6 +7,7 @@ import {
   type ApiTransactionType,
   type CreateTransactionAttachmentInput,
 } from '../lib/api'
+import { BankSelect } from './BankSelect'
 
 type CreateTransactionPanelProps = {
   projectId: number
@@ -20,20 +21,6 @@ const paymentMethodLabels: Record<ApiPaymentMethod, string> = {
   CARD: 'Картка',
   OTHER: 'Інше',
 }
-
-const bankOptions = [
-  '',
-  'КредоБанк',
-  'ПриватБанк',
-  'ОщадБанк',
-  'Монобанк',
-  'Райффайзен Банк',
-  'ПУМБ',
-  'Укргазбанк',
-  'Укрсиббанк',
-  'Sense Bank',
-  'Інше',
-]
 
 const allowedAttachmentTypes = new Set([
   'application/pdf',
@@ -53,9 +40,7 @@ const attachmentTypeLabels: Record<ApiTransactionAttachmentType, string> = {
 
 function getLocalDateTimeValue() {
   const now = new Date()
-  const localDate = new Date(
-    now.getTime() - now.getTimezoneOffset() * 60_000,
-  )
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
 
   return localDate.toISOString().slice(0, 16)
 }
@@ -73,17 +58,13 @@ function getFilesError(files: File[]) {
     return 'Обери файл'
   }
 
-  const tooLargeFile = files.find(
-    (file) => file.size > 15 * 1024 * 1024,
-  )
+  const tooLargeFile = files.find((file) => file.size > 15 * 1024 * 1024)
 
   if (tooLargeFile) {
     return 'Максимальний розмір одного файлу — 15 МБ'
   }
 
-  const invalidFile = files.find(
-    (file) => !allowedAttachmentTypes.has(file.type),
-  )
+  const invalidFile = files.find((file) => !allowedAttachmentTypes.has(file.type))
 
   if (invalidFile) {
     return 'Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG та WEBP'
@@ -172,9 +153,7 @@ export function CreateTransactionPanel({
   }
 
   function removeSelectedAttachment(index: number) {
-    setAttachments((current) =>
-      current.filter((_, itemIndex) => itemIndex !== index),
-    )
+    setAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))
   }
 
   function handleDrop(
@@ -229,8 +208,7 @@ export function CreateTransactionPanel({
   }
 
   function renderUploadZone(attachmentType: ApiTransactionAttachmentType) {
-    const inputRef =
-      attachmentType === 'INVOICE' ? invoiceInputRef : expenseDocInputRef
+    const inputRef = attachmentType === 'INVOICE' ? invoiceInputRef : expenseDocInputRef
     const label = attachmentTypeLabels[attachmentType]
     const selectedFiles = attachments
       .map((attachment, index) => ({ ...attachment, index }))
@@ -272,11 +250,7 @@ export function CreateTransactionPanel({
           multiple
           accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp"
           onChange={(event) => {
-            selectAttachments(
-              Array.from(event.target.files ?? []),
-              attachmentType,
-            )
-
+            selectAttachments(Array.from(event.target.files ?? []), attachmentType)
             event.target.value = ''
           }}
           className="hidden"
@@ -334,9 +308,7 @@ export function CreateTransactionPanel({
             className="my-3 flex max-h-[calc(100vh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
           >
             <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
-              <h2 className="text-xl font-bold text-slate-900">
-                Додати {operationLabel}
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900">Додати {operationLabel}</h2>
 
               <button
                 type="button"
@@ -350,9 +322,7 @@ export function CreateTransactionPanel({
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Сума, грн
-                  </span>
+                  <span className="text-sm font-semibold text-slate-700">Сума, грн</span>
 
                   <input
                     required
@@ -373,9 +343,7 @@ export function CreateTransactionPanel({
                 </label>
 
                 <label className="block">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Дата операції
-                  </span>
+                  <span className="text-sm font-semibold text-slate-700">Дата операції</span>
 
                   <input
                     required
@@ -392,9 +360,7 @@ export function CreateTransactionPanel({
                 </label>
 
                 <label className="block sm:col-span-2">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Контрагент
-                  </span>
+                  <span className="text-sm font-semibold text-slate-700">Контрагент</span>
 
                   <input
                     value={form.counterparty}
@@ -410,9 +376,7 @@ export function CreateTransactionPanel({
                 </label>
 
                 <label className="block">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Спосіб оплати
-                  </span>
+                  <span className="text-sm font-semibold text-slate-700">Спосіб оплати</span>
 
                   <select
                     value={form.paymentMethod}
@@ -424,43 +388,29 @@ export function CreateTransactionPanel({
                     }
                     className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                   >
-                    {Object.entries(paymentMethodLabels).map(
-                      ([method, label]) => (
-                        <option key={method} value={method}>
-                          {label}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </label>
-
-                <label className="block">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Банк
-                  </span>
-
-                  <select
-                    value={form.accountName}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        accountName: event.target.value,
-                      }))
-                    }
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                  >
-                    {bankOptions.map((bank) => (
-                      <option key={bank || 'empty'} value={bank}>
-                        {bank || 'Оберіть банк'}
+                    {Object.entries(paymentMethodLabels).map(([method, label]) => (
+                      <option key={method} value={method}>
+                        {label}
                       </option>
                     ))}
                   </select>
                 </label>
 
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">Банк</span>
+                  <BankSelect
+                    value={form.accountName}
+                    onChange={(nextValue) =>
+                      setForm((current) => ({
+                        ...current,
+                        accountName: nextValue,
+                      }))
+                    }
+                  />
+                </label>
+
                 <label className="block sm:col-span-2">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Коментар
-                  </span>
+                  <span className="text-sm font-semibold text-slate-700">Коментар</span>
 
                   <textarea
                     value={form.comment}

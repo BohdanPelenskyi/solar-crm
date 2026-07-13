@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 import { useUndoDelete } from './UndoDeleteProvider'
+import { BankSelect } from './BankSelect'
 import {
   deleteProjectTransaction,
   updateProjectTransaction,
@@ -29,20 +30,6 @@ const paymentMethodLabels: Record<ApiPaymentMethod, string> = {
   CARD: 'Картка',
   OTHER: 'Інше',
 }
-
-const bankOptions = [
-  '',
-  'КредоБанк',
-  'ПриватБанк',
-  'ОщадБанк',
-  'Монобанк',
-  'Райффайзен Банк',
-  'ПУМБ',
-  'Укргазбанк',
-  'Укрсиббанк',
-  'Sense Bank',
-  'Інше',
-]
 
 function toDateTimeLocal(value: string) {
   const date = new Date(value)
@@ -270,22 +257,15 @@ export function TransactionActions({
                     Банк
                   </span>
 
-                  <select
+                  <BankSelect
                     value={form.accountName}
-                    onChange={(event) =>
+                    onChange={(nextValue) =>
                       setForm((current) => ({
                         ...current,
-                        accountName: event.target.value,
+                        accountName: nextValue,
                       }))
                     }
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
-                  >
-                    {bankOptions.map((bank) => (
-                      <option key={bank || 'empty'} value={bank}>
-                        {bank || 'Оберіть банк'}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </label>
               </div>
 

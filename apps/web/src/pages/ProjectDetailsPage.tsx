@@ -35,6 +35,7 @@ import { TransactionActions } from '../components/TransactionActions'
 import { TransactionAttachmentManager } from '../components/TransactionAttachmentManager'
 import { ProjectProposal } from '../components/ProjectProposal'
 import { ProjectEquipment } from '../components/ProjectEquipment'
+import { BankIcon } from '../components/BankIcon'
 
 const statusInfo: Record<
   ApiProjectStatus,
@@ -177,9 +178,15 @@ function FinanceBlock({
               className="flex flex-col gap-2 border-b border-slate-100 px-4 py-3 last:border-0 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0 flex-1 overflow-hidden">
-                <p className="truncate font-semibold text-slate-800">
-                  {transaction.counterparty || 'Не вказано'}
-                </p>
+                <div className="flex items-center gap-2">
+                  {transaction.accountName && (
+                    <BankIcon bankName={transaction.accountName} />
+                  )}
+
+                  <p className="min-w-0 truncate font-semibold text-slate-800">
+                    {transaction.counterparty || 'Не вказано'}
+                  </p>
+                </div>
 
                 <p className="mt-1 text-xs text-slate-500">
                   {formatDate(transaction.occurredAt)}
@@ -187,12 +194,6 @@ function FinanceBlock({
                     ? ` · ${transaction.comment}`
                     : ''}
                 </p>
-
-                {transaction.accountName && (
-                  <p className="mt-1 text-xs font-medium text-slate-500">
-                    Банк: {transaction.accountName}
-                  </p>
-                )}
 
                 <TransactionAttachmentManager
                   transaction={transaction}
