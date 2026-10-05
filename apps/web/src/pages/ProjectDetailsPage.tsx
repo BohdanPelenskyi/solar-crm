@@ -18,7 +18,6 @@ import {
   getUploadUrl,
   type ApiContactRole,
   type ApiProjectDetails,
-  type ApiProjectStatus,
   type ApiTransactionType,
 } from '../lib/api'
 import { AttachmentDeleteButton } from '../components/AttachmentDeleteButton'
@@ -36,36 +35,7 @@ import { TransactionAttachmentManager } from '../components/TransactionAttachmen
 import { ProjectProposal } from '../components/ProjectProposal'
 import { ProjectEquipment } from '../components/ProjectEquipment'
 import { BankIcon } from '../components/BankIcon'
-
-const statusInfo: Record<
-  ApiProjectStatus,
-  { label: string; className: string }
-> = {
-  DRAFT: {
-    label: 'Чернетка',
-    className: 'bg-slate-100 text-slate-700',
-  },
-  PROPOSAL_SENT: {
-    label: 'КП відправлено',
-    className: 'bg-sky-100 text-sky-700',
-  },
-  IN_PROGRESS: {
-    label: 'В роботі',
-    className: 'bg-emerald-100 text-emerald-700',
-  },
-  INSTALLATION: {
-    label: 'Монтаж',
-    className: 'bg-amber-100 text-amber-700',
-  },
-  COMPLETED: {
-    label: 'Завершено',
-    className: 'bg-violet-100 text-violet-700',
-  },
-  CANCELED: {
-    label: 'Скасовано',
-    className: 'bg-rose-100 text-rose-700',
-  },
-}
+import { PROJECT_STATUS_INFO } from '../constants/projectStatuses'
 
 const contactRoleLabels: Record<ApiContactRole, string> = {
   OWNER: 'Власник',
@@ -343,7 +313,7 @@ export function ProjectDetailsPage() {
     )
   }
 
-  const status = statusInfo[project.status]
+  const status = PROJECT_STATUS_INFO[project.status]
 
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-5 pb-24 sm:px-8 sm:py-7 md:pb-7">

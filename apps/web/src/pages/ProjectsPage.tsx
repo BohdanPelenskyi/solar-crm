@@ -7,38 +7,12 @@ import {
   type ApiProjectStatus,
 } from '../lib/api'
 import { CreateProjectPanel } from '../components/CreateProjectPanel'
+import {
+  PROJECT_STATUS_INFO,
+  PROJECT_STATUS_OPTIONS,
+} from '../constants/projectStatuses'
 
 type StatusFilter = 'ALL' | ApiProjectStatus
-
-const statusInfo: Record<
-  ApiProjectStatus,
-  { label: string; className: string }
-> = {
-  DRAFT: {
-    label: 'Чернетка',
-    className: 'bg-slate-100 text-slate-700',
-  },
-  PROPOSAL_SENT: {
-    label: 'КП відправлено',
-    className: 'bg-sky-100 text-sky-700',
-  },
-  IN_PROGRESS: {
-    label: 'В роботі',
-    className: 'bg-emerald-100 text-emerald-700',
-  },
-  INSTALLATION: {
-    label: 'Монтаж',
-    className: 'bg-amber-100 text-amber-700',
-  },
-  COMPLETED: {
-    label: 'Завершено',
-    className: 'bg-violet-100 text-violet-700',
-  },
-  CANCELED: {
-    label: 'Скасовано',
-    className: 'bg-rose-100 text-rose-700',
-  },
-}
 
 function formatMoney(amount: number) {
   return new Intl.NumberFormat('uk-UA', {
@@ -233,12 +207,11 @@ export function ProjectsPage() {
               className="min-h-12 rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-700 outline-none focus:border-blue-500 sm:text-sm"
             >
               <option value="ALL">Усі статуси</option>
-              <option value="DRAFT">Чернетка</option>
-              <option value="PROPOSAL_SENT">КП відправлено</option>
-              <option value="IN_PROGRESS">В роботі</option>
-              <option value="INSTALLATION">Монтаж</option>
-              <option value="COMPLETED">Завершено</option>
-              <option value="CANCELED">Скасовано</option>
+              {PROJECT_STATUS_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
 
             <select
@@ -303,7 +276,7 @@ export function ProjectsPage() {
               <div className="mt-5 space-y-3 md:hidden">
                 {filteredProjects.map((project) => {
                   const primaryContact = project.contacts[0]
-                  const status = statusInfo[project.status]
+                  const status = PROJECT_STATUS_INFO[project.status]
                   const summary = project.financialSummary
                   const responsible = getResponsible(project)
 
@@ -420,7 +393,7 @@ export function ProjectsPage() {
                   <tbody>
                     {filteredProjects.map((project) => {
                       const primaryContact = project.contacts[0]
-                      const status = statusInfo[project.status]
+                      const status = PROJECT_STATUS_INFO[project.status]
                       const summary = project.financialSummary
                       const responsible = getResponsible(project)
 

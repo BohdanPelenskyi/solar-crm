@@ -1,8 +1,7 @@
-export type ProjectStatus =
-  | 'В роботі'
-  | 'КП відправлено'
-  | 'Монтаж'
-  | 'Завершено'
+import type { ApiProjectStatus } from '../lib/api'
+import { PROJECT_STATUS_INFO } from '../constants/projectStatuses'
+
+export type ProjectStatus = ApiProjectStatus
 
 export type Project = {
   id: number
@@ -19,7 +18,7 @@ export const projects: Project[] = [
   {
     id: 1,
     name: 'СЕС 30 кВт — ресторан Green Hall',
-    status: 'В роботі',
+    status: 'IN_PROGRESS',
     location: 'Львівська обл., с. Сокільники',
     source: 'Instagram',
     contactName: 'Василь',
@@ -29,7 +28,7 @@ export const projects: Project[] = [
   {
     id: 2,
     name: 'СЕС 50 кВт — склад',
-    status: 'КП відправлено',
+    status: 'PROPOSAL_SENT',
     location: 'м. Львів',
     source: 'Рекомендація',
     contactName: 'Ігор',
@@ -39,7 +38,7 @@ export const projects: Project[] = [
   {
     id: 3,
     name: 'Гібридна СЕС 10 кВт — магазин',
-    status: 'Монтаж',
+    status: 'PREPARING_IMPLEMENTATION',
     location: 'м. Дрогобич',
     source: 'Google',
     contactName: 'Олег',
@@ -49,7 +48,7 @@ export const projects: Project[] = [
   {
     id: 4,
     name: 'УЗЕ 100 кВт·год — виробництво',
-    status: 'Завершено',
+    status: 'COMPLETED',
     location: 'Львівська обл.',
     source: 'Партнер',
     contactName: 'Марія',
@@ -58,9 +57,9 @@ export const projects: Project[] = [
   },
 ]
 
-export const statusStyles: Record<ProjectStatus, string> = {
-  'В роботі': 'bg-emerald-100 text-emerald-700',
-  'КП відправлено': 'bg-sky-100 text-sky-700',
-  Монтаж: 'bg-amber-100 text-amber-700',
-  Завершено: 'bg-violet-100 text-violet-700',
-}
+export const statusStyles = Object.fromEntries(
+  Object.entries(PROJECT_STATUS_INFO).map(([status, info]) => [
+    status,
+    info.className,
+  ]),
+) as Record<ProjectStatus, string>

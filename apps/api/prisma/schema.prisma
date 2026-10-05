@@ -9,12 +9,20 @@ datasource db {
 }
 
 enum ProjectStatus {
-  DRAFT
+  NEW
+  PREPARING_PROPOSAL
   PROPOSAL_SENT
+  CONTRACT_APPROVAL
+  CONTRACT_SIGNED
+  AWAITING_PAYMENT
+  PAID
+  PREPARING_IMPLEMENTATION
   IN_PROGRESS
-  INSTALLATION
+  PAUSED
   COMPLETED
-  CANCELED
+  REFUSED
+  REMIND_LATER
+  NO_LONGER_RELEVANT
 }
 
 enum ContactRole {
@@ -83,7 +91,7 @@ enum EquipmentStatus {
 model Project {
   id       Int           @id @default(autoincrement())
   name     String
-  status   ProjectStatus @default(DRAFT)
+  status   ProjectStatus @default(NEW)
   source               String?
   brigade             String?
   responsiblePrimary  String?

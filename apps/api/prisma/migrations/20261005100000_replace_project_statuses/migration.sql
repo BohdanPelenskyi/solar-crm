@@ -1,0 +1,37 @@
+-- Re-map existing projects to the closest equivalent in the expanded workflow.
+ALTER TABLE "Project" ALTER COLUMN "status" DROP DEFAULT;
+
+CREATE TYPE "ProjectStatus_new" AS ENUM (
+  'NEW',
+  'PREPARING_PROPOSAL',
+  'PROPOSAL_SENT',
+  'CONTRACT_APPROVAL',
+  'CONTRACT_SIGNED',
+  'AWAITING_PAYMENT',
+  'PAID',
+  'PREPARING_IMPLEMENTATION',
+  'IN_PROGRESS',
+  'PAUSED',
+  'COMPLETED',
+  'REFUSED',
+  'REMIND_LATER',
+  'NO_LONGER_RELEVANT'
+);
+
+ALTER TABLE "Project"
+ALTER COLUMN "status" TYPE "ProjectStatus_new"
+USING (
+  CASE "status"::text
+    WHEN 'DRAFT' THEN 'NEW'
+    WHEN 'PROPOSAL_SENT' THEN 'PROPOSAL_SENT'
+    WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
+    WHEN 'INSTALLATION' THEN 'IN_PROGRESS'
+    WHEN 'COMPLETED' THEN 'COMPLETED'
+    WHEN 'CANCELED' THEN 'REFUSED'
+  END
+)::"ProjectStatus_new";
+
+DROP TYPE "ProjectStatus";
+ALTER TYPE "ProjectStatus_new" RENAME TO "ProjectStatus";
+
+ALTER TABLE "Project" ALTER COLUMN "status" SET DEFAULT 'NEW';

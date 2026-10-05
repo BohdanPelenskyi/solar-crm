@@ -5,6 +5,7 @@ import {
   updateProject,
   type ApiProjectStatus,
 } from '../lib/api'
+import { PROJECT_STATUS_OPTIONS } from '../constants/projectStatuses'
 
 type EditableProject = {
   id: number
@@ -20,15 +21,6 @@ type EditableProject = {
 type EditProjectPanelProps = {
   project: EditableProject
   onUpdated: () => Promise<void> | void
-}
-
-const statusLabels: Record<ApiProjectStatus, string> = {
-  DRAFT: 'Чернетка',
-  PROPOSAL_SENT: 'КП відправлено',
-  IN_PROGRESS: 'В роботі',
-  INSTALLATION: 'Монтаж',
-  COMPLETED: 'Завершено',
-  CANCELED: 'Скасовано',
 }
 
 const sourceOptions = [
@@ -182,8 +174,8 @@ export function EditProjectPanel({
                   }
                   className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-500"
                 >
-                  {Object.entries(statusLabels).map(([status, label]) => (
-                    <option key={status} value={status}>
+                  {PROJECT_STATUS_OPTIONS.map(({ value, label }) => (
+                    <option key={value} value={value}>
                       {label}
                     </option>
                   ))}

@@ -114,12 +114,20 @@ export async function getCurrentUser(): Promise<ApiAuthenticatedUser> {
 }
 
 export type ApiProjectStatus =
-  | 'DRAFT'
+  | 'NEW'
+  | 'PREPARING_PROPOSAL'
   | 'PROPOSAL_SENT'
+  | 'CONTRACT_APPROVAL'
+  | 'CONTRACT_SIGNED'
+  | 'AWAITING_PAYMENT'
+  | 'PAID'
+  | 'PREPARING_IMPLEMENTATION'
   | 'IN_PROGRESS'
-  | 'INSTALLATION'
+  | 'PAUSED'
   | 'COMPLETED'
-  | 'CANCELED'
+  | 'REFUSED'
+  | 'REMIND_LATER'
+  | 'NO_LONGER_RELEVANT'
 
 export type ApiContactRole =
   | 'OWNER'

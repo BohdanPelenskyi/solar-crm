@@ -13,7 +13,8 @@ export class DashboardService {
   async getOverview() {
     const inactiveProjectStatuses = [
       ProjectStatus.COMPLETED,
-      ProjectStatus.CANCELED,
+      ProjectStatus.REFUSED,
+      ProjectStatus.NO_LONGER_RELEVANT,
     ]
 
     const [

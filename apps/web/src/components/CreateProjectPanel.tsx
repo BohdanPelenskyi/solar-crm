@@ -5,18 +5,10 @@ import {
   type ApiContactRole,
   type ApiProjectStatus,
 } from '../lib/api'
+import { PROJECT_STATUS_OPTIONS } from '../constants/projectStatuses'
 
 type CreateProjectPanelProps = {
   onCreated: () => Promise<void> | void
-}
-
-const statusLabels: Record<ApiProjectStatus, string> = {
-  DRAFT: 'Чернетка',
-  PROPOSAL_SENT: 'КП відправлено',
-  IN_PROGRESS: 'В роботі',
-  INSTALLATION: 'Монтаж',
-  COMPLETED: 'Завершено',
-  CANCELED: 'Скасовано',
 }
 
 const contactRoleLabels: Record<ApiContactRole, string> = {
@@ -43,7 +35,7 @@ const sourceOptions = [
 
 const initialForm = {
   name: '',
-  status: 'DRAFT' as ApiProjectStatus,
+  status: 'NEW' as ApiProjectStatus,
   source: '',
   brigade: '',
   responsiblePrimary: '',
@@ -179,8 +171,8 @@ export function CreateProjectPanel({
                     }
                     className="mt-1.5 min-h-12 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base outline-none transition focus:border-blue-500 sm:text-sm"
                   >
-                    {Object.entries(statusLabels).map(([status, label]) => (
-                      <option key={status} value={status}>
+                    {PROJECT_STATUS_OPTIONS.map(({ value, label }) => (
+                      <option key={value} value={value}>
                         {label}
                       </option>
                     ))}
