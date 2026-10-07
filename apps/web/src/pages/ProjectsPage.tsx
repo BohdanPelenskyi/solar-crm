@@ -292,7 +292,9 @@ export function ProjectsPage() {
                           </h3>
 
                           <p className="mt-1 text-xs text-slate-500">
-                            {project.source || 'Джерело не вказано'}
+                            {project.source
+                              ? `Джерело: ${project.source}`
+                              : 'Джерело не вказано'}
                           </p>
                         </div>
 

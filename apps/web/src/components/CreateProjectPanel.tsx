@@ -137,12 +137,39 @@ export function CreateProjectPanel({
 
             <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block sm:col-span-2">
-                  <span className="text-sm font-semibold text-slate-700">
-                    Назва проєкту
-                  </span>
+                <div className="sm:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <label
+                      htmlFor="create-project-name-input"
+                      className="text-sm font-semibold text-slate-700"
+                    >
+                      Назва проєкту
+                    </label>
+
+                    {(form.contactFullName.trim() || form.location.trim()) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const parts = [
+                            form.contactFullName.trim() ? `Клієнт ${form.contactFullName.trim()}` : '',
+                            form.location.trim() || '',
+                          ].filter(Boolean)
+                          if (parts.length > 0) {
+                            setForm((current) => ({
+                              ...current,
+                              name: parts.join(' — '),
+                            }))
+                          }
+                        }}
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                      >
+                        Сформувати з контакту / міста
+                      </button>
+                    )}
+                  </div>
 
                   <input
+                    id="create-project-name-input"
                     required
                     value={form.name}
                     onChange={(event) =>
@@ -151,10 +178,13 @@ export function CreateProjectPanel({
                         name: event.target.value,
                       }))
                     }
-                    placeholder="Наприклад: СЕС 30 кВт — приватний будинок"
+                    placeholder="Наприклад: СЕС 30 кВт — Сергій (Перемишляни)"
                     className="mt-1.5 min-h-12 w-full rounded-xl border border-slate-200 px-3 py-3 text-base outline-none transition focus:border-blue-500 sm:text-sm"
                   />
-                </label>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Вказуйте конкретну назву або клієнта/місто, щоб проєкти не плуталися в списку
+                  </p>
+                </div>
 
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-700">
