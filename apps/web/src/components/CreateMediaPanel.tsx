@@ -1,20 +1,12 @@
 import { useRef, useState, type DragEvent, type FormEvent } from 'react'
-import { FileText, Upload } from 'lucide-react'
+import { FileText, Loader2, Upload, X } from 'lucide-react'
 import { uploadProjectMedia } from '../lib/api'
+import { isImageFile, isMediaFile, optimizeImageFile } from '../lib/imageOptimization'
 
 type CreateMediaPanelProps = {
   projectId: number
   onCreated: () => Promise<void> | void
 }
-
-const allowedMimeTypes = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'video/mp4',
-  'video/webm',
-  'video/quicktime',
-])
 
 function formatFileSize(bytes: number) {
   return new Intl.NumberFormat('uk-UA', {
@@ -30,12 +22,14 @@ export function CreateMediaPanel({
 
   const [isOpen, setIsOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [statusMessage, setStatusMessage] = useState('')
   const [error, setError] = useState('')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
   function resetForm() {
-    setSelectedFile(null)
+    setSelectedFiles([])
     setError('')
+    setStatusMessage('')
 
     if (inputRef.current) {
       inputRef.current.value = ''
@@ -51,36 +45,57 @@ export function CreateMediaPanel({
     setIsOpen(false)
   }
 
-  function selectFile(file: File | null) {
-    if (!file) {
-      setSelectedFile(null)
+  function handleFilesSelect(fileList: FileList | File[] | null) {
+    if (!fileList || fileList.length === 0) {
       return
     }
 
-    if (!allowedMimeTypes.has(file.type)) {
-      setError('Дозволені JPG, PNG, WEBP, MP4, WEBM та MOV')
-      return
+    const filesArray = Array.from(fileList)
+    const validFiles: File[] = []
+    let hasInvalid = false
+    let hasTooLarge = false
+
+    for (const file of filesArray) {
+      if (!isMediaFile(file)) {
+        hasInvalid = true
+        continue
+      }
+
+      if (file.size > 50 * 1024 * 1024) {
+        hasTooLarge = true
+        continue
+      }
+
+      validFiles.push(file)
     }
 
-    if (file.size > 50 * 1024 * 1024) {
-      setError('Максимальний розмір файлу — 50 МБ')
-      return
+    if (hasInvalid) {
+      setError('Підтримуються формати фото (JPG, PNG, WEBP, HEIC) та відео (MP4, MOV)')
+    } else if (hasTooLarge) {
+      setError('Максимальний розмір одного файлу — 50 МБ')
+    } else {
+      setError('')
     }
 
-    setSelectedFile(file)
-    setError('')
+    if (validFiles.length > 0) {
+      setSelectedFiles((current) => [...current, ...validFiles])
+    }
+  }
+
+  function removeFile(index: number) {
+    setSelectedFiles((current) => current.filter((_, i) => i !== index))
   }
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault()
-    selectFile(event.dataTransfer.files[0] ?? null)
+    handleFilesSelect(event.dataTransfer.files)
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!selectedFile) {
-      setError('Спочатку вибери фото або відео')
+    if (selectedFiles.length === 0) {
+      setError('Спочатку виберіть хоча б одне фото або відео')
       return
     }
 
@@ -88,7 +103,31 @@ export function CreateMediaPanel({
       setIsSaving(true)
       setError('')
 
-      await uploadProjectMedia(projectId, selectedFile)
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const originalFile = selectedFiles[i]
+        const currentNum = i + 1
+        const total = selectedFiles.length
+
+        if (isImageFile(originalFile)) {
+          setStatusMessage(
+            total > 1
+              ? `Оптимізація та завантаження фото (${currentNum}/${total})...`
+              : 'Оптимізація та завантаження фото...',
+          )
+        } else {
+          setStatusMessage(
+            total > 1
+              ? `Завантаження відео (${currentNum}/${total})...`
+              : 'Завантаження відео...',
+          )
+        }
+
+        // Optimize image on client side (converts HEIC, resizes to max 2048px, reduces size)
+        const fileToUpload = await optimizeImageFile(originalFile)
+
+        await uploadProjectMedia(projectId, fileToUpload)
+      }
+
       await onCreated()
 
       resetForm()
@@ -97,10 +136,11 @@ export function CreateMediaPanel({
       setError(
         requestError instanceof Error
           ? requestError.message
-          : 'Не вдалося завантажити файл',
+          : 'Не вдалося завантажити медіа',
       )
     } finally {
       setIsSaving(false)
+      setStatusMessage('')
     }
   }
 
@@ -125,14 +165,10 @@ export function CreateMediaPanel({
               Завантажити фото або відео
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
-              JPG, PNG, WEBP, MP4, WEBM або MOV до 50 МБ
-            </p>
-
             <div className="mt-6 space-y-4">
               <div>
                 <span className="text-sm font-semibold text-slate-700">
-                  Файл
+                  Виберіть файли
                 </span>
 
                 <div
@@ -145,36 +181,66 @@ export function CreateMediaPanel({
                 >
                   <Upload size={24} className="mx-auto text-blue-600" />
                   <p className="mt-2 text-sm font-semibold text-slate-700">
-                    Перетягни файл сюди або натисни для вибору
+                    Натисніть для вибору з галереї або камери
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    JPG, PNG, WEBP, MP4, WEBM або MOV
+                    Можна вибрати кілька фото одночасно
                   </p>
                 </div>
 
                 <input
                   ref={inputRef}
-                  required
                   type="file"
-                  accept=".jpg,.jpeg,.png,.webp,.mp4,.webm,.mov"
-                  onChange={(event) =>
-                    selectFile(event.target.files?.[0] ?? null)
-                  }
+                  multiple
+                  accept="image/*,video/*,.heic,.heif"
+                  onChange={(event) => {
+                    handleFilesSelect(event.target.files)
+                    if (event.target) {
+                      event.target.value = ''
+                    }
+                  }}
                   className="hidden"
                 />
 
-                {selectedFile && (
-                  <div className="mt-3 flex min-w-0 items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                    <FileText size={16} className="shrink-0 text-blue-600" />
-                    <span className="min-w-0 flex-1 truncate font-semibold">
-                      {selectedFile.name}
-                    </span>
-                    <span className="shrink-0 text-xs text-slate-500">
-                      {formatFileSize(selectedFile.size)} МБ
-                    </span>
+                {selectedFiles.length > 0 && (
+                  <div className="mt-3 max-h-48 space-y-2 overflow-y-auto">
+                    {selectedFiles.map((file, index) => (
+                      <div
+                        key={`${file.name}-${index}`}
+                        className="flex min-w-0 items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700"
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <FileText size={16} className="shrink-0 text-blue-600" />
+                          <span className="min-w-0 truncate font-semibold">
+                            {file.name}
+                          </span>
+                          <span className="shrink-0 text-xs text-slate-500">
+                            {formatFileSize(file.size)} МБ
+                          </span>
+                        </div>
+
+                        {!isSaving && (
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index)}
+                            className="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                            title="Видалити"
+                          >
+                            <X size={15} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
+
+              {statusMessage && (
+                <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700">
+                  <Loader2 size={16} className="animate-spin shrink-0" />
+                  <span>{statusMessage}</span>
+                </div>
+              )}
 
               {error && (
                 <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
@@ -187,17 +253,19 @@ export function CreateMediaPanel({
               <button
                 type="button"
                 onClick={closeModal}
-                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                disabled={isSaving}
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
                 Скасувати
               </button>
 
               <button
                 type="submit"
-                disabled={isSaving}
-                className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                disabled={isSaving || selectedFiles.length === 0}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
               >
-                {isSaving ? 'Завантаження...' : 'Завантажити'}
+                {isSaving && <Loader2 size={16} className="animate-spin" />}
+                {isSaving ? 'Завантаження...' : `Завантажити (${selectedFiles.length})`}
               </button>
             </div>
           </form>

@@ -4,6 +4,7 @@ import {
   uploadProjectDocument,
   type ApiFileCategory,
 } from '../lib/api'
+import { isImageFile, optimizeImageFile } from '../lib/imageOptimization'
 
 type CreateDocumentPanelProps = {
   projectId: number
@@ -90,9 +91,13 @@ export function CreateDocumentPanel({
       setIsSaving(true)
       setError('')
 
+      const fileToUpload = isImageFile(selectedFile)
+        ? await optimizeImageFile(selectedFile)
+        : selectedFile
+
       await uploadProjectDocument(
         projectId,
-        selectedFile,
+        fileToUpload,
         category,
         false,
       )
@@ -156,7 +161,7 @@ export function CreateDocumentPanel({
                     Перетягни файл сюди або натисни для вибору
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, WEBP
+                    PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, WEBP, HEIC
                   </p>
                 </div>
 
@@ -164,7 +169,7 @@ export function CreateDocumentPanel({
                   ref={inputRef}
                   required
                   type="file"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.heic,.heif,image/*"
                   onChange={(event) =>
                     selectFile(event.target.files?.[0] ?? null)
                   }

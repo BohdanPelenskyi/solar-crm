@@ -10,6 +10,7 @@ import {
   type ApiTransactionAttachment,
   type ApiTransactionAttachmentType,
 } from '../lib/api'
+import { isImageFile, optimizeImageFile } from '../lib/imageOptimization'
 
 type TransactionAttachmentManagerProps = {
   transaction: ApiFinancialTransaction
@@ -25,6 +26,10 @@ const allowedAttachmentTypes = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
+  'image/heic',
+  'image/heif',
+  'image/heif-sequence',
+  'image/heic-sequence',
 ])
 
 const attachmentTypeLabels: Record<ApiTransactionAttachmentType, string> = {
@@ -51,10 +56,12 @@ function getFilesError(files: File[]) {
     return 'Максимальний розмір одного файлу — 15 МБ'
   }
 
-  const invalidFile = files.find((file) => !allowedAttachmentTypes.has(file.type))
+  const invalidFile = files.find(
+    (file) => !allowedAttachmentTypes.has(file.type) && !isImageFile(file),
+  )
 
   if (invalidFile) {
-    return 'Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG та WEBP'
+    return 'Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, WEBP та HEIC'
   }
 
   return ''
@@ -98,7 +105,11 @@ export function TransactionAttachmentManager({
       setSavingType(attachmentType)
       setError('')
 
-      await addTransactionAttachments(transaction.id, attachmentType, files)
+      const optimizedFiles = await Promise.all(
+        files.map((file) => (isImageFile(file) ? optimizeImageFile(file) : file)),
+      )
+
+      await addTransactionAttachments(transaction.id, attachmentType, optimizedFiles)
       await onChanged()
 
       if (invoiceInputRef.current) {
@@ -251,7 +262,7 @@ export function TransactionAttachmentManager({
           ref={inputRef}
           type="file"
           multiple
-          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.heic,.heif,image/*"
           onChange={(event) => {
             void uploadFiles(
               Array.from(event.target.files ?? []),

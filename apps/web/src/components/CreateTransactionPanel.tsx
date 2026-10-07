@@ -7,6 +7,7 @@ import {
   type ApiTransactionType,
   type CreateTransactionAttachmentInput,
 } from '../lib/api'
+import { isImageFile, optimizeImageFile } from '../lib/imageOptimization'
 import { BankSelect } from './BankSelect'
 
 type CreateTransactionPanelProps = {
@@ -31,6 +32,10 @@ const allowedAttachmentTypes = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
+  'image/heic',
+  'image/heif',
+  'image/heif-sequence',
+  'image/heic-sequence',
 ])
 
 const attachmentTypeLabels: Record<ApiTransactionAttachmentType, string> = {
@@ -64,10 +69,12 @@ function getFilesError(files: File[]) {
     return 'Максимальний розмір одного файлу — 15 МБ'
   }
 
-  const invalidFile = files.find((file) => !allowedAttachmentTypes.has(file.type))
+  const invalidFile = files.find(
+    (file) => !allowedAttachmentTypes.has(file.type) && !isImageFile(file),
+  )
 
   if (invalidFile) {
-    return 'Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG та WEBP'
+    return 'Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, WEBP та HEIC'
   }
 
   return ''
@@ -179,6 +186,15 @@ export function CreateTransactionPanel({
       setIsSaving(true)
       setError('')
 
+      const optimizedAttachments = await Promise.all(
+        attachments.map(async (item) => ({
+          type: item.type,
+          file: isImageFile(item.file)
+            ? await optimizeImageFile(item.file)
+            : item.file,
+        })),
+      )
+
       await createProjectTransaction(
         projectId,
         {
@@ -190,7 +206,7 @@ export function CreateTransactionPanel({
           occurredAt: new Date(form.occurredAt).toISOString(),
           comment: form.comment.trim() || undefined,
         },
-        attachments,
+        optimizedAttachments,
       )
 
       await onCreated()
@@ -248,7 +264,7 @@ export function CreateTransactionPanel({
           ref={inputRef}
           type="file"
           multiple
-          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.heic,.heif,image/*"
           onChange={(event) => {
             selectAttachments(Array.from(event.target.files ?? []), attachmentType)
             event.target.value = ''

@@ -20,23 +20,58 @@ import { diskStorage } from 'multer'
 import { MediaType } from '../generated/prisma/client'
 import { MediaService } from './media.service'
 
-const uploadDirectory = join(process.cwd(), 'uploads', 'media')
+function getUploadsRoot() {
+  return process.env.UPLOADS_DIR || join(process.cwd(), 'uploads')
+}
+
+function getMediaUploadsDirectory() {
+  return join(getUploadsRoot(), 'media')
+}
 
 const imageMimeTypes = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
+  'image/heic',
+  'image/heif',
+  'image/heif-sequence',
+  'image/heic-sequence',
+  'image/gif',
 ])
 
 const videoMimeTypes = new Set([
   'video/mp4',
   'video/webm',
   'video/quicktime',
+  'video/x-m4v',
+  'video/3gpp',
+  'video/mpeg',
+])
+
+const imageExtensions = new Set([
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.heic',
+  '.heif',
+  '.gif',
+])
+
+const videoExtensions = new Set([
+  '.mp4',
+  '.webm',
+  '.mov',
+  '.m4v',
+  '.3gp',
+  '.mpeg',
+  '.mpg',
 ])
 
 const mediaUploadOptions = {
   storage: diskStorage({
     destination: (_request, _file, callback) => {
+      const uploadDirectory = getMediaUploadsDirectory()
       mkdirSync(uploadDirectory, { recursive: true })
       callback(null, uploadDirectory)
     },
@@ -66,17 +101,26 @@ export class MediaController {
       throw new BadRequestException('Оберіть фото або відео')
     }
 
+    const extension = extname(file.originalname).toLowerCase()
     let type: MediaType
 
-    if (imageMimeTypes.has(file.mimetype)) {
+    if (
+      imageMimeTypes.has(file.mimetype) ||
+      file.mimetype.startsWith('image/') ||
+      imageExtensions.has(extension)
+    ) {
       type = MediaType.PHOTO
-    } else if (videoMimeTypes.has(file.mimetype)) {
+    } else if (
+      videoMimeTypes.has(file.mimetype) ||
+      file.mimetype.startsWith('video/') ||
+      videoExtensions.has(extension)
+    ) {
       type = MediaType.VIDEO
     } else {
       await unlink(file.path).catch(() => undefined)
 
       throw new BadRequestException(
-        'Дозволені JPG, PNG, WEBP, MP4, WEBM та MOV',
+        'Дозволені JPG, PNG, WEBP, HEIC, MP4, WEBM та MOV',
       )
     }
 

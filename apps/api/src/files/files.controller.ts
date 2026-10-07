@@ -34,6 +34,24 @@ const allowedMimeTypes = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
+  'image/heic',
+  'image/heif',
+  'image/heif-sequence',
+  'image/heic-sequence',
+])
+
+const allowedFileExtensions = new Set([
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.heic',
+  '.heif',
 ])
 
 const documentUploadOptions = {
@@ -70,11 +88,13 @@ export class FilesController {
       throw new BadRequestException('Оберіть файл для завантаження')
     }
 
-    if (!allowedMimeTypes.has(file.mimetype)) {
+    const extension = extname(file.originalname).toLowerCase()
+
+    if (!allowedMimeTypes.has(file.mimetype) && !allowedFileExtensions.has(extension)) {
       await unlink(file.path).catch(() => undefined)
 
       throw new BadRequestException(
-        'Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG та WEBP',
+        'Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, WEBP та HEIC',
       )
     }
 

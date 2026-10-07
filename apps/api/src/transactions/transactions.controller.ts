@@ -41,6 +41,24 @@ const allowedAttachmentMimeTypes = new Set([
   'image/jpeg',
   'image/png',
   'image/webp',
+  'image/heic',
+  'image/heif',
+  'image/heif-sequence',
+  'image/heic-sequence',
+])
+
+const allowedAttachmentExtensions = new Set([
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.heic',
+  '.heif',
 ])
 
 const allowedAttachmentTypes = new Set<string>([
@@ -70,14 +88,15 @@ async function cleanupUploadedFiles(files: Express.Multer.File[]) {
 }
 
 async function validateAttachments(attachments: Express.Multer.File[]) {
-  const invalidFile = attachments.find(
-    (file) => !allowedAttachmentMimeTypes.has(file.mimetype),
-  )
+  const invalidFile = attachments.find((file) => {
+    const ext = extname(file.originalname).toLowerCase()
+    return !allowedAttachmentMimeTypes.has(file.mimetype) && !allowedAttachmentExtensions.has(ext)
+  })
 
   if (invalidFile) {
     await cleanupUploadedFiles(attachments)
     throw new BadRequestException(
-      'Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG та WEBP',
+      'Дозволені PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, WEBP та HEIC',
     )
   }
 }
