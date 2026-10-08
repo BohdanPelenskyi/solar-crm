@@ -6,6 +6,7 @@ import {
   type ApiProjectStatus,
 } from '../lib/api'
 import { PROJECT_STATUS_OPTIONS } from '../constants/projectStatuses'
+import { CLIENT_SOURCE_OPTIONS } from '../constants/clientSources'
 
 type CreateProjectPanelProps = {
   onCreated: () => Promise<void> | void
@@ -18,20 +19,6 @@ const contactRoleLabels: Record<ApiContactRole, string> = {
   MANAGER: 'Менеджер',
   OTHER: 'Інше',
 }
-
-const sourceOptions = [
-  'Назар Жолобович',
-  'Андрій Ковальчук',
-  'Василь Женчур',
-  'Василь Пеленський',
-  'Сайт',
-  'Банк Львів',
-  'Приват Банк',
-  'Юля',
-  'Володимир Кравцов',
-  'Ігор Муха',
-  'Павло Муха',
-]
 
 const initialForm = {
   name: '',
@@ -226,7 +213,7 @@ export function CreateProjectPanel({
 >
   <option value="">Не вказано</option>
 
-  {sourceOptions.map((source) => (
+  {CLIENT_SOURCE_OPTIONS.map((source) => (
     <option key={source} value={source}>
       {source}
     </option>

@@ -6,6 +6,7 @@ import {
   type ApiProjectStatus,
 } from '../lib/api'
 import { PROJECT_STATUS_OPTIONS } from '../constants/projectStatuses'
+import { CLIENT_SOURCE_OPTIONS } from '../constants/clientSources'
 
 type EditableProject = {
   id: number
@@ -22,20 +23,6 @@ type EditProjectPanelProps = {
   project: EditableProject
   onUpdated: () => Promise<void> | void
 }
-
-const sourceOptions = [
-  'Назар Жолобович',
-  'Андрій Ковальчук',
-  'Василь Женчур',
-  'Василь Пеленський',
-  'Сайт',
-  'Банк Львів',
-  'Приват Банк',
-  'Юля',
-  'Володимир Кравцов',
-  'Ігор Муха',
-  'Павло Муха',
-]
 
 export function EditProjectPanel({
   project,
@@ -199,7 +186,10 @@ export function EditProjectPanel({
 >
   <option value="">Не вказано</option>
 
-  {sourceOptions.map((source) => (
+  {(project.source && !CLIENT_SOURCE_OPTIONS.includes(project.source)
+    ? [project.source, ...CLIENT_SOURCE_OPTIONS]
+    : CLIENT_SOURCE_OPTIONS
+  ).map((source) => (
     <option key={source} value={source}>
       {source}
     </option>
