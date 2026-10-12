@@ -135,13 +135,13 @@ export class FilesService {
     createFileDto: CreateFileDto,
     uploadedFile: Express.Multer.File,
   ) {
-    await this.ensureProjectExists(projectId)
-
     const isFinalProposal =
       createFileDto.category === FileCategory.PROPOSAL &&
       createFileDto.isFinal === true
 
     try {
+      await this.ensureProjectExists(projectId)
+
       return await this.prisma.$transaction(async (transaction) => {
         if (isFinalProposal) {
           await transaction.projectFile.updateMany({

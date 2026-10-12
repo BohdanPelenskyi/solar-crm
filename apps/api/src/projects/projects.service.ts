@@ -6,8 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { unlink } from 'node:fs/promises';
-import { join } from 'node:path';
+import { removeStoredFiles } from '../common/uploads';
 import { ContactRole } from '../generated/prisma/client';
 
 @Injectable()
@@ -54,9 +53,8 @@ export class ProjectsService {
 
   async findAll() {
     const projects = await this.prisma.project.findMany({
-      orderBy: {
-        updatedAt: 'desc',
-      },
+      // Stable order by creation: editing a project must not move it in the list.
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       include: {
         contacts: {
           where: {
@@ -158,11 +156,27 @@ export class ProjectsService {
   async update(id: number, updateProjectDto: UpdateProjectDto) {
     await this.findOne(id);
 
+    const { name, status, ...optionalFields } = updateProjectDto;
+    const data: Record<string, string | null | undefined> = {};
+
+    // Optional text fields: null or an empty string clears the value.
+    for (const [key, value] of Object.entries(optionalFields)) {
+      if (value === undefined) {
+        continue;
+      }
+
+      data[key] = value === null || value.trim() === '' ? null : value.trim();
+    }
+
     return this.prisma.project.update({
       where: {
         id,
       },
-      data: updateProjectDto,
+      data: {
+        ...data,
+        ...(name?.trim() ? { name: name.trim() } : {}),
+        ...(status ? { status } : {}),
+      },
     });
   }
 
@@ -227,13 +241,7 @@ export class ProjectsService {
       });
     });
 
-    await Promise.all(
-      storageKeys.map((storageKey) =>
-        unlink(join(process.cwd(), 'uploads', storageKey)).catch(
-          () => undefined,
-        ),
-      ),
-    );
+    await removeStoredFiles(storageKeys);
 
     return {
       message: 'Проєкт видалено',

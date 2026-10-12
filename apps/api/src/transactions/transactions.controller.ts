@@ -164,19 +164,24 @@ export class TransactionsController {
     @Body() createTransactionDto: CreateTransactionDto,
     @UploadedFiles() attachments: Express.Multer.File[] = [],
   ) {
-    await validateAttachments(attachments)
+    try {
+      await validateAttachments(attachments)
 
-    const attachmentTypes = normalizeAttachmentTypes(
-      createTransactionDto.attachmentTypes,
-      attachments.length,
-    )
+      const attachmentTypes = normalizeAttachmentTypes(
+        createTransactionDto.attachmentTypes,
+        attachments.length,
+      )
 
-    return this.transactionsService.create(
-      projectId,
-      createTransactionDto,
-      attachments,
-      attachmentTypes,
-    )
+      return await this.transactionsService.create(
+        projectId,
+        createTransactionDto,
+        attachments,
+        attachmentTypes,
+      )
+    } catch (error) {
+      await cleanupUploadedFiles(attachments)
+      throw error
+    }
   }
 
   @Get('projects/:projectId/transactions')
@@ -201,20 +206,24 @@ export class TransactionsController {
     @Body('attachmentType') attachmentTypeValue: string | undefined,
     @UploadedFiles() attachments: Express.Multer.File[] = [],
   ) {
-    await validateAttachments(attachments)
+    try {
+      await validateAttachments(attachments)
 
-    const attachmentType = normalizeAttachmentType(attachmentTypeValue)
+      const attachmentType = normalizeAttachmentType(attachmentTypeValue)
 
-    if (!attachmentType) {
+      if (!attachmentType) {
+        throw new BadRequestException('Некоректний тип фінансового документа')
+      }
+
+      return await this.transactionsService.addAttachments(
+        id,
+        attachments,
+        attachmentType,
+      )
+    } catch (error) {
       await cleanupUploadedFiles(attachments)
-      throw new BadRequestException('Некоректний тип фінансового документа')
+      throw error
     }
-
-    return this.transactionsService.addAttachments(
-      id,
-      attachments,
-      attachmentType,
-    )
   }
 
   @Delete('transaction-attachments/:id')

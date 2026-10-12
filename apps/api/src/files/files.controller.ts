@@ -19,11 +19,12 @@ import { mkdirSync } from 'node:fs'
 import { unlink } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import { diskStorage } from 'multer'
+import { getUploadsRoot } from '../common/uploads'
 import { FileCategory } from '../generated/prisma/client'
 import { CreateFileDto } from './dto/create-file.dto'
 import { FilesService } from './files.service'
 
-const uploadDirectory = join(process.cwd(), 'uploads', 'documents')
+const uploadDirectory = join(getUploadsRoot(), 'documents')
 
 const allowedMimeTypes = new Set([
   'application/pdf',

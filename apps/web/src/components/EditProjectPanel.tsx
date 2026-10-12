@@ -86,11 +86,11 @@ export function EditProjectPanel({
       await updateProject(project.id, {
         name: form.name.trim(),
         status: form.status,
-        source: form.source.trim() || undefined,
-        brigade: form.brigade.trim() || undefined,
-        responsiblePrimary: form.responsiblePrimary.trim() || undefined,
-        responsibleSecondary: form.responsibleSecondary.trim() || undefined,
-        location: form.location.trim() || undefined,
+        source: form.source.trim() || null,
+        brigade: form.brigade.trim() || null,
+        responsiblePrimary: form.responsiblePrimary.trim() || null,
+        responsibleSecondary: form.responsibleSecondary.trim() || null,
+        location: form.location.trim() || null,
       })
 
       await onUpdated()

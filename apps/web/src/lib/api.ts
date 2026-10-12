@@ -44,10 +44,23 @@ async function apiFetch(
     headers.set('Authorization', `Bearer ${token}`)
   }
 
-  return nativeFetch(input, {
+  const response = await nativeFetch(input, {
     ...init,
     headers,
   })
+
+  // An expired or revoked token: drop it and send the user back to the login page.
+  if (
+    response.status === 401 &&
+    token &&
+    !String(input).includes('/auth/login') &&
+    window.location.pathname !== '/login'
+  ) {
+    clearAccessToken()
+    window.location.assign('/login')
+  }
+
+  return response
 }
 
 async function getResponseError(
@@ -283,7 +296,7 @@ async function request<T>(path: string): Promise<T> {
   const response = await apiFetch(`${API_URL}${path}`)
 
   if (!response.ok) {
-    if (response.status === 404) {
+    if (response.status === 404 && /^\/projects\/\d+/.test(path)) {
       throw new Error('Проєкт не знайдено')
     }
 
@@ -621,12 +634,12 @@ export async function uploadProjectMedia(
 export type UpdateProjectPayload = {
   name?: string
   status?: ApiProjectStatus
-  source?: string
-  brigade?: string
-  responsiblePrimary?: string
-  responsibleSecondary?: string
-  location?: string
-  notes?: string
+  source?: string | null
+  brigade?: string | null
+  responsiblePrimary?: string | null
+  responsibleSecondary?: string | null
+  location?: string | null
+  notes?: string | null
 }
 
 export async function updateProject(

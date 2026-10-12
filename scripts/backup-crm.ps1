@@ -32,6 +32,7 @@ $previousPgPassFile = $env:PGPASSFILE
 $previousPgPassword = $env:PGPASSWORD
 $plainPassword = $null
 $success = $false
+$lockOwned = $false
 
 function Assert-LastExitCode {
   param([string]$Operation)
@@ -201,6 +202,7 @@ try {
   }
 
   Set-Content -Path $lockPath -Encoding utf8 -Value "Backup started: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+  $lockOwned = $true
   New-Item -ItemType Directory -Force $workDirectory | Out-Null
 
   $databaseBackup = Join-Path $workDirectory 'database.backup'
@@ -431,7 +433,10 @@ finally {
     Remove-Item -LiteralPath $workDirectory -Recurse -Force -ErrorAction SilentlyContinue
   }
 
-  Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue
+  # Remove the lock only if this run created it; otherwise we would unlock a running backup.
+  if ($lockOwned) {
+    Remove-Item -LiteralPath $lockPath -Force -ErrorAction SilentlyContinue
+  }
 
   if ($null -eq $previousPgPassFile) {
     Remove-Item Env:PGPASSFILE -ErrorAction SilentlyContinue

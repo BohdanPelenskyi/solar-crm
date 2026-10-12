@@ -158,9 +158,9 @@ export class TransactionsService {
     attachments: Express.Multer.File[] = [],
     attachmentTypes: TransactionAttachmentType[] = [],
   ) {
-    await this.ensureProjectExists(projectId)
-
     try {
+      await this.ensureProjectExists(projectId)
+
       return await this.prisma.financialTransaction.create({
         data: {
           projectId,

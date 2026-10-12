@@ -134,9 +134,9 @@ export class MediaService {
     uploadedFile: Express.Multer.File,
     type: MediaType,
   ) {
-    await this.ensureProjectExists(projectId)
-
     try {
+      await this.ensureProjectExists(projectId)
+
       return await this.prisma.projectMedia.create({
         data: {
           projectId,
