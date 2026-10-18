@@ -7,6 +7,7 @@ import {
   type ApiProjectStatus,
 } from '../lib/api'
 import { CreateProjectPanel } from '../components/CreateProjectPanel'
+import { CLIENT_SOURCE_OPTIONS } from '../constants/clientSources'
 import {
   PROJECT_STATUS_INFO,
   PROJECT_STATUS_OPTIONS,
@@ -92,7 +93,11 @@ export function ProjectsPage() {
   }, [])
 
   const sourceOptions = useMemo(
-    () => getUniqueOptions(projects.map((project) => project.source)),
+    () =>
+      getUniqueOptions([
+        ...CLIENT_SOURCE_OPTIONS,
+        ...projects.map((project) => project.source),
+      ]),
     [projects],
   )
 
