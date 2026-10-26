@@ -41,6 +41,7 @@ const allowedAttachmentTypes = new Set([
 const attachmentTypeLabels: Record<ApiTransactionAttachmentType, string> = {
   INVOICE: 'Рахунок',
   EXPENSE_DOC: 'Видаткова',
+  PAYMENT_ORDER: 'Платіжна інструкція',
 }
 
 function getLocalDateTimeValue() {
@@ -87,6 +88,7 @@ export function CreateTransactionPanel({
 }: CreateTransactionPanelProps) {
   const invoiceInputRef = useRef<HTMLInputElement>(null)
   const expenseDocInputRef = useRef<HTMLInputElement>(null)
+  const paymentOrderInputRef = useRef<HTMLInputElement>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
@@ -126,6 +128,10 @@ export function CreateTransactionPanel({
 
     if (expenseDocInputRef.current) {
       expenseDocInputRef.current.value = ''
+    }
+
+    if (paymentOrderInputRef.current) {
+      paymentOrderInputRef.current.value = ''
     }
   }
 
@@ -224,7 +230,11 @@ export function CreateTransactionPanel({
   }
 
   function renderUploadZone(attachmentType: ApiTransactionAttachmentType) {
-    const inputRef = attachmentType === 'INVOICE' ? invoiceInputRef : expenseDocInputRef
+    const inputRef = {
+      INVOICE: invoiceInputRef,
+      EXPENSE_DOC: expenseDocInputRef,
+      PAYMENT_ORDER: paymentOrderInputRef,
+    }[attachmentType]
     const label = attachmentTypeLabels[attachmentType]
     const selectedFiles = attachments
       .map((attachment, index) => ({ ...attachment, index }))
@@ -444,10 +454,14 @@ export function CreateTransactionPanel({
               </div>
 
               <div className="mt-4">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {renderUploadZone('INVOICE')}
-                  {renderUploadZone('EXPENSE_DOC')}
-                </div>
+                {isIncome ? (
+                  renderUploadZone('PAYMENT_ORDER')
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {renderUploadZone('INVOICE')}
+                    {renderUploadZone('EXPENSE_DOC')}
+                  </div>
+                )}
               </div>
 
               {error && (

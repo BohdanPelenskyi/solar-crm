@@ -43,6 +43,13 @@ export const BANKS: BankMeta[] = [
     aliases: ['райффайзен банк', 'райф', 'raiffeisen', 'raiffeisen bank'],
   },
   {
+    value: 'kredobank',
+    label: 'КредоБанк',
+    shortLabel: 'Кредо',
+    icon: '/banks/kredobank.png',
+    aliases: ['кредобанк', 'кредо банк', 'кредо', 'kredobank', 'kredo bank', 'credobank', 'credo bank'],
+  },
+  {
     value: 'sensebank',
     label: 'Sense Bank',
     shortLabel: 'Sense',

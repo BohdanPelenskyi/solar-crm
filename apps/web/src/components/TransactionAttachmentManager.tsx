@@ -35,6 +35,7 @@ const allowedAttachmentTypes = new Set([
 const attachmentTypeLabels: Record<ApiTransactionAttachmentType, string> = {
   INVOICE: 'Рахунок',
   EXPENSE_DOC: 'Видаткова',
+  PAYMENT_ORDER: 'Платіжна інструкція',
 }
 
 function formatFileSize(bytes: number) {
@@ -75,6 +76,7 @@ export function TransactionAttachmentManager({
   const { scheduleUndoDelete } = useUndoDelete()
   const invoiceInputRef = useRef<HTMLInputElement>(null)
   const expenseDocInputRef = useRef<HTMLInputElement>(null)
+  const paymentOrderInputRef = useRef<HTMLInputElement>(null)
   const [savingType, setSavingType] =
     useState<ApiTransactionAttachmentType | null>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
@@ -89,6 +91,11 @@ export function TransactionAttachmentManager({
   const expenseDocAttachments = attachments.filter(
     (attachment) => attachment.type === 'EXPENSE_DOC',
   )
+
+  const paymentOrderAttachments = attachments.filter(
+    (attachment) => attachment.type === 'PAYMENT_ORDER',
+  )
+  const isIncome = transaction.type === 'INCOME'
 
   async function uploadFiles(
     files: File[],
@@ -118,6 +125,10 @@ export function TransactionAttachmentManager({
 
       if (expenseDocInputRef.current) {
         expenseDocInputRef.current.value = ''
+      }
+
+      if (paymentOrderInputRef.current) {
+        paymentOrderInputRef.current.value = ''
       }
     } catch (requestError) {
       setError(
@@ -211,9 +222,13 @@ export function TransactionAttachmentManager({
   function renderUploadSection(
     attachmentType: ApiTransactionAttachmentType,
     items: ApiTransactionAttachment[],
+    canUpload = true,
   ) {
-    const inputRef =
-      attachmentType === 'INVOICE' ? invoiceInputRef : expenseDocInputRef
+    const inputRef = {
+      INVOICE: invoiceInputRef,
+      EXPENSE_DOC: expenseDocInputRef,
+      PAYMENT_ORDER: paymentOrderInputRef,
+    }[attachmentType]
     const label = attachmentTypeLabels[attachmentType]
     const isSaving = savingType === attachmentType
 
@@ -236,7 +251,7 @@ export function TransactionAttachmentManager({
             {label}
           </p>
 
-          {canManage && (
+          {canManage && canUpload && (
             <button
               type="button"
               disabled={isSaving}
@@ -280,8 +295,23 @@ export function TransactionAttachmentManager({
   return (
     <div className="mt-3 min-w-0">
       <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start">
-        {renderUploadSection('INVOICE', invoiceAttachments)}
-        {renderUploadSection('EXPENSE_DOC', expenseDocAttachments)}
+        {isIncome ? (
+          <>
+            {renderUploadSection('PAYMENT_ORDER', paymentOrderAttachments)}
+            {/* Старі файли приходів лишаються видимими, але нові не додаються */}
+            {invoiceAttachments.length > 0 &&
+              renderUploadSection('INVOICE', invoiceAttachments, false)}
+            {expenseDocAttachments.length > 0 &&
+              renderUploadSection('EXPENSE_DOC', expenseDocAttachments, false)}
+          </>
+        ) : (
+          <>
+            {renderUploadSection('INVOICE', invoiceAttachments)}
+            {renderUploadSection('EXPENSE_DOC', expenseDocAttachments)}
+            {paymentOrderAttachments.length > 0 &&
+              renderUploadSection('PAYMENT_ORDER', paymentOrderAttachments, false)}
+          </>
+        )}
       </div>
 
       {error && (

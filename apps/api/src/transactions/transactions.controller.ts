@@ -64,6 +64,7 @@ const allowedAttachmentExtensions = new Set([
 const allowedAttachmentTypes = new Set<string>([
   TransactionAttachmentType.INVOICE,
   TransactionAttachmentType.EXPENSE_DOC,
+  TransactionAttachmentType.PAYMENT_ORDER,
 ])
 
 const transactionAttachmentUploadOptions = {

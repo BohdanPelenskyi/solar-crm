@@ -1,0 +1,1 @@
+ALTER TYPE "TransactionAttachmentType" ADD VALUE IF NOT EXISTS 'PAYMENT_ORDER';

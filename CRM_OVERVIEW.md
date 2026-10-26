@@ -1,6 +1,6 @@
 # Solar CRM — повний опис та аудит процесів
 
-Дата перевірки: 2026-10-12. Гілка `master`, коміт `19c70f3`.
+Дата перевірки: 2026-10-12, оновлено 2026-10-26 (карта змін — розділ 11). Гілка `master`, коміт `f4f167f`.
 
 ## 1. Що це
 
@@ -212,3 +212,42 @@ solar-crm/
 ## 10. Межі цієї перевірки
 
 Перевірено статичним аналізом усього коду API, схеми, міграцій, скрипта бекапу та `api.ts`/`AuthContext`/`App`/`EditProjectPanel` на фронтенді; запущено type-check і lint. Не перевірялося живим запуском: UI-сторінки (`ProjectDetailsPage`, `TasksPage`, `CalendarPage`, панелі створення), `UndoDeleteProvider`, `create-user.ts`, поведінка з реальною БД та відновлення з бекапу. Пункти про них позначені як ризик, а не підтверджений дефект.
+
+## 11. Як це працює зсередини і де вносити зміни
+
+### 11.1 Потік запиту
+Браузер → SPA (`apps/web`) → `src/lib/api.ts` (`request()` додає `Authorization: Bearer`, на 401 чистить токен і веде на `/login`) → `/api/*` → глобальний `JwtAuthGuard` (токен + дозвіл за HTTP-методом) → `ValidationPipe` (`whitelist` + `forbidNonWhitelisted`: **невідоме поле в тілі = 400**) → контролер → сервіс → `PrismaService` → PostgreSQL. Файли лежать на диску в `getUploadsRoot()` (`UPLOADS_DIR` або `cwd/uploads`), у БД — лише `storageKey`; у вебі URL будує `getUploadUrl()`.
+
+### 11.2 API-маршрути (префікс `/api`)
+| Модуль | Маршрути |
+|---|---|
+| auth | `POST auth/login` (public), `GET auth/me` |
+| projects | `POST/GET projects`, `GET/PATCH/DELETE projects/:id` |
+| contacts | `POST/GET projects/:id/contacts`, `PATCH/DELETE contacts/:id` |
+| transactions | `POST/GET projects/:id/transactions`, `PATCH/DELETE transactions/:id`, `POST transactions/:id/attachments`, `DELETE transaction-attachments/:id` |
+| files | `POST/GET projects/:id/documents`, `PATCH documents/:id/final`, `DELETE documents/:id` |
+| media | `POST/GET projects/:id/media`, `DELETE media/:id` |
+| tasks | `POST/GET projects/:id/tasks`, `GET tasks`, `PATCH/DELETE tasks/:id` |
+| equipment | `POST/GET projects/:id/equipment`, `PATCH/DELETE equipment/:id` |
+| dashboard / health | `GET dashboard`, `GET health` (public) |
+
+### 11.3 Сторінки вебу (`apps/web/src`)
+`/projects` (`ProjectsPage`: пошук + фільтри статус/джерело/відповідальний, таблиця на десктопі й картки на мобільному; `/` і `/dashboard` ведуть сюди), `/projects/:id` (`ProjectDetailsPage`: фінанси, контакти, КП, документи, медіа, завдання, обладнання, нотатки), `/tasks`, `/calendar`, `/login`. Видалення йдуть через `UndoDeleteProvider` (відкладене видалення з «Скасувати»).
+
+### 11.4 Чек-лист: куди чіпати залежно від типу зміни
+| Зміна | Файли (мають збігатися!) |
+|---|---|
+| **Новий/перейменований статус проєкту** | `schema.prisma` enum `ProjectStatus` + нова міграція (для перейменування — як `20261005100000_replace_project_statuses`, з переносом даних) → `lib/api.ts` тип `ApiProjectStatus` → `constants/projectStatuses.ts` (мітка + колір; фільтри й форми будуються звідси автоматично) → перевірити `dashboard.service.ts` («активні») |
+| **Джерела клієнтів** | лише `constants/clientSources.ts` (у фільтрі завжди показується + унікальні значення з БД; `source` — вільний рядок у БД) |
+| **Нове поле проєкту** | `schema.prisma` + міграція → `create-project.dto.ts` (`UpdateProjectDto` успадковує, без `contact*`) → `projects.service.ts` → `ApiProject`/`CreateProjectPayload`/`UpdateProjectPayload` у `api.ts` → `CreateProjectPanel`, `EditProjectPanel`, `ProjectsPage`, `ProjectDetailsPage`. Очищення поля: клієнт шле `null`/`''`, не `undefined` |
+| **Фінанси** (тип, спосіб оплати, банки) | enum у схемі + `create/update-transaction.dto.ts` + `transactions.service.ts` + `CreateTransactionPanel`/`TransactionActions`; банки — `constants/banks.ts` + `public/banks/*` |
+| **Права ролей** | `auth/guards/jwt-auth.guard.ts` (правила за HTTP-методом) + `canAdd/canManage` у компонентах |
+| **Файли/завантаження** | `files.controller.ts`, `media.controller.ts`, `transactions.controller.ts` (multer, ліміти), `common/uploads.ts` |
+| **Завдання/календар/нагадування** | `tasks.*`, `TasksPage`, `CalendarPage`, `TaskReminderBell`, `ProjectTasks`, `EditTaskPanel` |
+
+### 11.5 Правила безпечного внесення змін
+1. Зміна схеми = нова міграція (`prisma migrate dev`), старі не правити; для enum у Postgres потрібне перенесення даних, а не просто видалення значення.
+2. Тип у `api.ts` і DTO на бекенді міняти разом, інакше `forbidNonWhitelisted` дасть 400.
+3. Перед комітом: `apps/api` — `npx tsc --noEmit`, `npm test`; `apps/web` — `npx tsc -b`, `npm run lint`.
+4. Прод роздає `apps/web/dist`: після змін у вебі — `npm run build` у `apps/web`; після змін в API — `npm run build` + перезапуск; міграції на проді — `prisma migrate deploy` **після** бекапу (`scripts/backup-crm.ps1`).
+5. Модель загрози: користується лише адмін (див. 8.1), тому захист `/uploads` і перевірка ролі в БД свідомо не посилювались.

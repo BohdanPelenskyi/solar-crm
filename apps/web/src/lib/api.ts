@@ -151,7 +151,10 @@ export type ApiContactRole =
 
 export type ApiTransactionType = 'INCOME' | 'EXPENSE'
 
-export type ApiTransactionAttachmentType = 'INVOICE' | 'EXPENSE_DOC'
+export type ApiTransactionAttachmentType =
+  | 'INVOICE'
+  | 'EXPENSE_DOC'
+  | 'PAYMENT_ORDER'
 
 export type ApiFileCategory =
   | 'PROPOSAL'

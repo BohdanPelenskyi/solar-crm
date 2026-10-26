@@ -48,6 +48,7 @@ enum PaymentMethod {
 enum TransactionAttachmentType {
   INVOICE
   EXPENSE_DOC
+  PAYMENT_ORDER
 }
 
 enum FileCategory {
